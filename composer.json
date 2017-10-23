@@ -1,0 +1,29 @@
+{
+    "name" : "specshaper/gdpr-bundle",
+    "type" : "symfony-bundle",
+    "description" : "Bundle provides a service for encoding via annotation.",
+    "homepage": "https://github.com/mogilvie/GdprBundle",
+    "authors" : [{
+        "name" : "Mark Ogilvie",
+        "email" : "mark.ogilvie@ogilvieconsulting.net"
+    }],
+    "keywords" : [
+        "encoder bundle"
+    ],
+    "license" : [
+        "MIT"
+    ],
+    "require" : {
+        "php": ">=7.1",
+        "symfony/symfony": "^3.2",
+	"specshaper/gdpr-bundle": "dev-master"
+    },
+    "autoload" : {
+        "psr-4": { "SpecShaper\\GdprBundle\\": "" }
+    },
+    "extra" : {
+    "branch-alias" : {
+            "dev-master" : "1.0.x-dev"
+        }
+    }
+}
