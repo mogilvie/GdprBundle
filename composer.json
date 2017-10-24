@@ -1,14 +1,14 @@
 {
     "name" : "specshaper/gdpr-bundle",
     "type" : "symfony-bundle",
-    "description" : "Bundle provides a service for encoding via annotation.",
+    "description" : "A symfony3 bundle for classifying entity parameters according to GDPR requirements and encrypting data",
     "homepage": "https://github.com/mogilvie/GdprBundle",
     "authors" : [{
         "name" : "Mark Ogilvie",
         "email" : "mark.ogilvie@ogilvieconsulting.net"
     }],
     "keywords" : [
-        "encoder bundle"
+        "symfony gdpr dpia encryption encrypt bundle"
     ],
     "license" : [
         "MIT"
