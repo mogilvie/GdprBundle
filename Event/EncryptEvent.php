@@ -16,7 +16,7 @@
  * @since       Available since Release 1.0.0
  */
 
-namespace SpecShaper\EncryptBundle\Event;
+namespace SpecShaper\GdprBundle\Event;
 
 use SpecShaper\NotificationBundle\Event\NotificationEvent;
 

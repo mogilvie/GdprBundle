@@ -1,12 +1,14 @@
-# SpecShaper Encrypt Bundle
+# SpecShaper GDPR Bundle
 
-A bundle to handle encoding and decoding of parameters using OpenSSL and Doctrine lifecycle events.  
+A bundle to aid with the General Data Protection Regulation requirements. 
 
 Features include:
 
 - Written for Symfony verison 3.x.x
-- Uses OpenSSL
-- Uses Lifecycle event
+- Provides annotation for adding to entity parameter doc blocks
+- Records values for Data Protection Impact Assesments of entity parameters.
+- Uses SpecShaper\EncryptBundle to encrypt senstive data
+
 
 **Warning**
 - This bundle has not been unit tested.
@@ -15,11 +17,9 @@ compatibility tested.
 
 Features road map:
 
-- [x] Create a factory method to expand for different encryptors
-- [x] Create a twig function to decrypt encoded values
-- [ ] Expand parameters to allow selection of encoding method
-- [ ] Create CLI commands
-- [ ] Handle DateTime data types via the bundle.
+- [ ] Generate a entity parameter coverage report.
+- [ ] Generate a summary report of all results.
+- [ ] Figure out how to dispose of data at end of retention period.
 
 
 ## Documentation
@@ -35,8 +35,8 @@ This bundle is under the MIT license. See the complete license in the bundle:
 
 ## About
 
-EncryptBundle has been written for the [SpecShaper](http://about.specshaper.com) and [Parolla](http://parolla.ie) websites
-to encode users private data. The bundle will be expanded as part of a larger EU GDPR data management bundle.
+GdprBundle has been written for the [SpecShaper](http://about.specshaper.com) and [Parolla](http://parolla.ie) websites
+to encode users private data.
 
 ## Reporting an issue or a feature request
 
@@ -55,7 +55,7 @@ Open a command console, enter your project directory and execute the
 following command to download the latest version of this bundle:
 
 ```
-$ composer require specshaper/encrypt-bundle dev-master
+$ composer require specshaper/gdpr-bundle dev-master
 ```
 
 This command requires you to have Composer installed globally, as explained
@@ -78,7 +78,7 @@ class AppKernel extends Kernel
     {
         $bundles = array(
             // ...
-            new SpecShaper\EncryptBundle\SpecShaperEncryptBundle(),
+            new SpecShaper\GdprBundle\SpecShaperGdprBundle(),
         );
         // ...
     }
@@ -90,7 +90,7 @@ class AppKernel extends Kernel
 
 Geneate a 256 bit 32 character key and add it to your parameters file.
 
-```
+```yaml
 // app/config/parameters.yml
 
     ...
@@ -98,12 +98,22 @@ Geneate a 256 bit 32 character key and add it to your parameters file.
     
 ```
 
+Configure the EncryptBundle to use the GdprBundle encryption subscriver
+```yaml
+// app/config/config.yml
+
+    ...
+    spec_shaper_encrypt:
+        subscriber_class: 'SpecShaper\GdprBundle\Subscribers\GdprSubscriber'
+
+```   
 ## Step 3: Create the entities
 Add the Annotation entity to the declared classes in the entity.
 
-
-```
-use SpecShaper\EncryptBundle\Annotations\Encrypted;
+```php
+<?php
+...
+use SpecShaper\GdprBundle\Annotations\PersonalData;
 ```
 
 Add the annotation '@Encrypted' to the parameters that you want encrypted.
@@ -126,9 +136,18 @@ with the DateType formtype.
 
 ```
     /**
-     * A users date of birth
-     
-     * @Encrypted
+     * @var \DateTime
+     *
+     * @PersonalData(
+     *     isSensitive=false,
+     *     isEncrypted=true,
+     *     identifiableBy="Can be associated using other records",
+     *     providedBy="The employee, revenue, the employer",
+     *     purposeFor="Used to check the employee is not under age",
+     *     retainFor="6 years",
+     *     disposeBy="Aggregate into decades"
+     * )
+     *
      * @ORM\Column(type="string", nullable=true)
      */
     protected $dateOfBirth;
@@ -146,19 +165,4 @@ In this case, use the twig filter to decrypt your value when rendering.
 {{ employee.bankAccountNumber | decrypt }}
 ```
 
-## Step 5: Call the Encryptor service directly
-
-You can of course inject the encryptor service any time into classes
-either by using autowiring or defining the injection in your service definitions.
-
-```
-/**
- * @var SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
- */
-private $encryptor;
-
-public function __construct(EncryptorInterface $encryptor)
-{
-    $this->encryptor = $encryptor;
-}
-```
+# Reports

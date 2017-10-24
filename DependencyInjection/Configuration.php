@@ -1,6 +1,6 @@
 <?php
 
-namespace SpecShaper\EncryptBundle\DependencyInjection;
+namespace SpecShaper\GdprBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -18,14 +18,15 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('spec_shaper_encrypt');
+        $rootNode = $treeBuilder->root('spec_shaper_gdpr');
 
 
-            $rootNode
-                ->children()
-                ->scalarNode('method')->defaultValue('OpenSSL')->end()
-                ->end()
-            ;
+//            $rootNode
+//                ->children()
+//                    ->booleanNode('encrypt_personal_data')->defaultValue(false)->end()
+//                    ->booleandNode('encrypt_special_data')->defaultValue(false)->end()
+//                ->end()
+//            ;
         
         return $treeBuilder;
     }

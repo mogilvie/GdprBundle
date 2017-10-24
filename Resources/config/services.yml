@@ -9,21 +9,3 @@ services:
         # this means you cannot fetch services directly from the container via $container->get()
         # if you need to do this, you can override this setting on individual services
         public: false
-
-    SpecShaper\EncryptBundle\Subscribers\DoctrineEncryptSubscriber: ~
-
-
-    SpecShaper\EncryptBundle\Encryptors\EncryptorFactory: ~
-
-    SpecShaper\EncryptBundle\Encryptors\EncryptorService:
-        factory: 'SpecShaper\EncryptBundle\Encryptors\EncryptorFactory:createService'
-        arguments:
-            - '%spec_shaper_encrypt.method%'
-            - '%encrypt_key%'
-
-    SpecShaper\EncryptBundle\Encryptors\EncryptorInterface:
-        alias: 'SpecShaper\EncryptBundle\Encryptors\EncryptorService'
-         # public: true
-
-    SpecShaper\EncryptBundle\Twig\EncryptExtension:
-        tags: ['twig.extension']
