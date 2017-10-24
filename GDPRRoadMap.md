@@ -9,8 +9,9 @@ The annotation class itself shall have the following properties for setting:
 - method: The method by which this data is personal. Directly, by association
 - encrypt: True if the data should be encrpted
 - providedBy: Who / what provides the data
+- sharedWith: An array of third parties who the data is possibly shared with
 - retainFor: How long the data is to be kept for, in PeriodInterval format
-- disposeBy: What to do with the data when it is no longer required/relevent. (Delete / Aggregate / Anonymise)
+- disposeBy: What is done with the data when it is no longer required/relevent. (Delete / Aggregate / Anonymise)
 
 ## Encryption
 The SpecShaperEncryptBundle will be used to encyrpt any parameters where the annotation parameter encrypt is true.
