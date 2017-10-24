@@ -116,23 +116,7 @@ Add the Annotation entity to the declared classes in the entity.
 use SpecShaper\GdprBundle\Annotations\PersonalData;
 ```
 
-Add the annotation '@Encrypted' to the parameters that you want encrypted.
-```
-    /**
-     *
-     * A PPS number is always 7 numbers followed by either one or two letters.
-     *
-     * @Encrypted
-     * @ORM\Column(type="string", nullable=true)
-     */
-    protected $taxNumber;
-   
-```
-
-For DateTime parameters store the date as a string, and use the getters and setters
-to convert that string.
-You may also need to create a DataTransformer if you are using the parameter in a form
-with the DateType formtype.
+Add the annotation '@PersonalData' to the parameters that you want to record.
 
 ```
     /**
@@ -153,6 +137,14 @@ with the DateType formtype.
     protected $dateOfBirth;
    
 ```
+
+For DateTime parameters store the date as a string, and use the getters and setters
+to convert that string.
+
+You may also need to create a DataTransformer if you are using the parameter in a form
+with the DateType formtype.
+
+
 ## Step 4: Decrypt in templates
 
 If you query a repository using a select method, or get an array result 
