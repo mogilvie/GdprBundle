@@ -59,4 +59,36 @@ class GdprSubscriber extends DoctrineEncryptSubscriber implements DoctrineEncryp
 
         return $encryptedFields;
     }
+
+    /**
+     * @return array
+     */
+    public function getEncryptionableProperties($allProperties)
+    {
+        $encryptedFields = [];
+
+        foreach ($allProperties as $refProperty) {
+            /** @var \ReflectionProperty $refProperty */
+            foreach($this->annReader->getPropertyAnnotations($refProperty) as $key => $annotation){
+
+                // If the annotation type is in the Encrypt config as an encrypted annotation then add.
+                if (in_array(get_class($annotation), $this->annotationArray)) {
+                    $refProperty->setAccessible(true);
+                    $encryptedFields[] = $refProperty;
+                    continue;
+                }
+
+                // GDPR Bundle, if the annotation is PersonalData and it is encrypted then add.
+                if ($annotation instanceof PersonalData
+                    && $annotation->isEncrypted
+                ) {
+                    $refProperty->setAccessible(true);
+                    $encryptedFields[] = $refProperty;
+                }
+
+            }
+        }
+
+        return $encryptedFields;
+    }
 }

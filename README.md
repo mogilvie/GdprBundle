@@ -98,15 +98,18 @@ Geneate a 256 bit 32 character key and add it to your parameters file.
     
 ```
 
-Configure the EncryptBundle to use the GdprBundle encryption subscriver
+Configure the EncryptBundle to use the GdprBundle encryption subscriber
 ```yaml
 // app/config/config.yml
 
     ...
     spec_shaper_encrypt:
+        is_disabled: false
         subscriber_class: 'SpecShaper\GdprBundle\Subscribers\GdprSubscriber'
 
 ```   
+You can disable encryption of the database by setting deleting is_disabled or setting it true.
+
 ## Step 3: Create the entities
 Add the Annotation entity to the declared classes in the entity.
 
