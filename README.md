@@ -88,7 +88,12 @@ class AppKernel extends Kernel
 
 ## Step 2: Configure the bundle
 
-Geneate a 256 bit 32 character key and add it to your parameters file.
+Geneate a 256 bit 32 character key using the command tool in the Encrypt bundle
+```
+$ bin/console encrypt:genkey
+```
+
+Add your encryption key to the parameters file.
 
 ```yaml
 // app/config/parameters.yml
@@ -98,7 +103,7 @@ Geneate a 256 bit 32 character key and add it to your parameters file.
     
 ```
 
-Configure the EncryptBundle to use the GdprBundle encryption subscriber
+Configure the EncryptBundle to use the GdprBundle encryption subscriber. Or point to your own custom subscriber.
 ```yaml
 // app/config/config.yml
 
@@ -159,5 +164,3 @@ In this case, use the twig filter to decrypt your value when rendering.
 ```
 {{ employee.bankAccountNumber | decrypt }}
 ```
-
-# Reports
