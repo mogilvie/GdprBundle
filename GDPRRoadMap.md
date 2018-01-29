@@ -28,3 +28,17 @@ or Special.
 
 ### Detail Report
 A report should list all personal data and its parameters as stored by the annotation.
+
+## Portability
+Provide a new class annotation "GdprTable" on each entity that indicates if the table should be included in the portability output.
+There are probably going to need to be two types of portability output.  
+- Individual
+- Organisation
+An individual export should pull all data related to a single identifiable person.  
+The organisation export should pull all data for an organisation.  
+The GdprTable annotation should define the foreign keys and table structures for the export in both indivdual and organisation types.
+The PersonalData property annotation should describe what happens to the data in the export request
+
+## Data Descruction / Anonymisation
+Provide a command that traverses all table rows in containing @PersonalData annotations.  
+Check the mysql row for the last date that it was modified and if it exceeds the date of disposal
