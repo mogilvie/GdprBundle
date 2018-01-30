@@ -1,6 +1,6 @@
 <?php
 /**
- * GdprBundle/Utils/Disposal/Aggregate.php.
+ * SpecShaper/GdprBundle/Utils/Disposal/Aggregate.php.
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
  * @copyright   (c) 2018, SpecShaper - All rights reserved
@@ -8,7 +8,7 @@
  */
 namespace GdprBundle/Utils/Disposal;
 
-use GdprBundle/Utils/Disposal/DisposalInterface;
+use SpecShaper/GdprBundle/Utils/Disposal/DisposalInterface;
 
 /**
  * Aggregate
