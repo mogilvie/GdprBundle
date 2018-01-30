@@ -6,9 +6,9 @@
  * @copyright   (c) 2018, SpecShaper - All rights reserved
  *
  */
-namespace GdprBundle/Utils/Disposal;
+namespace SpecShaper/GdprBundle/Utils/Disposal;
 
-use GdprBundle/Utils/Disposal/DisposalInterface;
+use SpecShaper/GdprBundle/Utils/Disposal/DisposalInterface;
 
 /**
  * AggregateDate.
