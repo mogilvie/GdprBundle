@@ -8,7 +8,7 @@
  */
 namespace GdprBundle/Utils/Disposal;
 
-use GdprBundle/Utils/Disposal/AggregateInterface;
+use GdprBundle/Utils/Disposal/DisposalInterface;
 
 /**
  * AggregateDate.
@@ -20,7 +20,7 @@ use GdprBundle/Utils/Disposal/AggregateInterface;
  *
  * @version     Release: 1.0.0
  */
-class AggregateDate implements AggregateInterface
+class AggregateDate implements DisposalInterface
 {
     const AGGREGATE_BY_DAY = 'DAY';
     const AGGREGATE_BY_WEEK = 'WEEK';
