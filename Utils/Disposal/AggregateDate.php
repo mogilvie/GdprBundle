@@ -38,8 +38,31 @@ class AggregateDate implements DisposalInterface
        $this->aggregateBy = $aggregateBy;
     }
  
-    public function aggregate(\DateTimeInterface $dateTime){
-       return;
+    public function dispose($dateTime){
+       return $this->convert($dateTime);
+    }
+    
+    private function convert(\DateTimeInterface $dateTime){
+        switch($this->aggregateBy){
+            case self::AGGREGATE_BY_DAY:
+                break;
+            case self::AGGREGATE_BY_WEEK:
+                break;
+            case self::AGGREGATE_BY_MONTH:
+                break;
+            case self::AGGREGATE_BY_QUARTER:
+                break;
+            case self::AGGREGATE_BY_YEAR:
+                break;
+            case self::AGGREGATE_BY_HALF_DECADE:
+                break;
+            case self::AGGREGATE_BY_DECADE:
+                break;
+            case self::AGGREGATE_BY_HALF_CENTURAY:
+                break;
+            case self::AGGREGATE_BY_CENTURARY:
+                break;
+        }
     }
  
 }
