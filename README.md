@@ -17,7 +17,7 @@ compatibility tested.
 
 Features road map:
 
-- [ ] Generate a entity parameter coverage report.
+- [x] Generate a entity parameter coverage report.
 - [ ] Generate a summary report of all results.
 - [ ] Figure out how to dispose of data at end of retention period.
 
@@ -115,6 +115,20 @@ Configure the EncryptBundle to use the GdprBundle encryption subscriber. Or poin
 ```   
 You can disable encryption of the database by setting deleting is_disabled or setting it true.
 
+Configure the routing to access the reports:  
+```yaml
+// app/config/routing.yml
+
+    ...
+    spec_shaper_gdpr:
+        resource: "@SpecShaperGdprBundle/Controller/"
+        type:     annotation
+        prefix:   /gdpr
+
+```
+You should make soure that the /gdpr path is behind a firewall in your security settings.  
+
+
 ## Step 3: Create the entities
 Add the Annotation entity to the declared classes in the entity.
 
@@ -164,3 +178,14 @@ In this case, use the twig filter to decrypt your value when rendering.
 ```
 {{ employee.bankAccountNumber | decrypt }}
 ```
+
+## Step 5: Reportings
+
+### Coverage Report
+
+Access the coverage report by navigating your browser to '\gdpr\reporting\coverage'.      
+This will serve an excel file that contains all the entities and parameters managed by the entity manager.
+If any of the parameters contain the PersonalData attribute then it will also list each of the attributes values.
+
+Note that at the moment we are only pulling information from the default entity manager. I need to
+improve the coverage report to get all entityManagers.
