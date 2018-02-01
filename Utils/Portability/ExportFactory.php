@@ -4,7 +4,7 @@
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
  */
-namespace SpecShaper/GdprBundle/Utils/Portability;
+namespace SpecShaper\GdprBundle\Utils\Portability;
 
 /**
  * ExportFactory.
@@ -21,7 +21,7 @@ class ExportFactory
     private $dataFormat;
     
     public function __construct($dataFormat){
-      $this->dataFormat = $dataFormat
+      $this->dataFormat = $dataFormat;
     }
     
     public function createExportClass($exportClass){

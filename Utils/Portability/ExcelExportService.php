@@ -4,9 +4,8 @@
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
  */
-namespace SpecShaper/GdprBundle/Utils/Portability;
+namespace SpecShaper\GdprBundle\Utils\Portability;
 
-use SpecShaper/GdprBundle/Utils/Portability/ExportServiceInterface;
 
 /**
  * ExportService.
