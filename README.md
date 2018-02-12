@@ -9,18 +9,42 @@ Features include:
 - Records values for Data Protection Impact Assesments of entity parameters.
 - Uses SpecShaper\EncryptBundle to encrypt senstive data
 
+## Version History
+
+### Version 1
+Version 1of this project used annotations to classify entity parameter personal data.  
+This unfortunatly could not be extended to managing live data, it runs into problems where data
+become expired. What should get displayed instead? How can live data status be reported with annotations?
+
+Version 1 Features:
+- [x] Generate a entity parameter coverage report.
+- [x] Generate a summary report of all entity parameters and GDPR annotations.
+
+### Version 2 
+Version 2 will use a new PersonalData entity to store the GDPR parameters associated with the personal data parameter.
+
+A custom twig function will then be used to:
+- Decrypt any encrypted data
+- Display current data in its correct format.
+- Display deleted/aggregated/annonymised data once it has been sanitised
+
+Version 2 Features:
+
+- [ ] Create a storage entity
+- [ ] Create twig templates for entity to handle displaying expired data.
+- [ ] Create a migration command to create new database fields, and convert PersonalData attributes to PersonalData entity rows.
+- [ ] Create disposal classes and service
+- [ ] Create a command to dispose of data
+- [ ] Implement a cron task to dispose of data
+- [ ] Generate activity report
+- [ ] Create consent forms
+- [ ] Generate consent report
+- [ ] Export data command
 
 **Warning**
 - This bundle has not been unit tested.
 - It has only been running on a Symfony2 v3.0.1 project, and not backward
 compatibility tested.
-
-Features road map:
-
-- [x] Generate a entity parameter coverage report.
-- [ ] Generate a summary report of all results.
-- [ ] Figure out how to dispose of data at end of retention period.
-
 
 ## Documentation
 
