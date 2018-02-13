@@ -5,7 +5,8 @@ A bundle to aid with the General Data Protection Regulation requirements.
 Features include:
 
 - Written for Symfony verison 3.x.x
-- Provides annotation for adding to entity parameter doc blocks
+- Provides annotation for adding to entity parameter doc blocks - this method is being deprecated.
+- Uses a PersonalData object and data transformers.
 - Records values for Data Protection Impact Assesments of entity parameters.
 - Uses SpecShaper\EncryptBundle to encrypt senstive data
 
@@ -129,7 +130,34 @@ Configure the routing to access the reports:
 You should make soure that the /gdpr path is behind a firewall in your security settings.  
 
 
-## Step 3: Create the entities
+## Step 3a: Create the entities if using the PersonalData object.
+Add the Annotation entity to the declared classes in the entity.
+
+```php
+<?php
+...
+use SpecShaper\GdprBundle\Annotations\PersonalData;
+```
+
+Add the annotation '@PersonalData' to the parameters that you want to record.
+
+```
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(type="PersonalData", nullable=true)
+     */
+    protected $dateOfBirth;
+   
+```
+
+For DateTime parameters store the date as a string, and use the getters and setters
+to convert that string.
+
+You may also need to create a DataTransformer if you are using the parameter in a form
+with the DateType formtype.
+
+## Step 3b: Create the entities if using the annotation method.
 Add the Annotation entity to the declared classes in the entity.
 
 ```php

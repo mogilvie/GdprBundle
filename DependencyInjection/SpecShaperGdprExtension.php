@@ -2,7 +2,8 @@
 
 namespace SpecShaper\GdprBundle\DependencyInjection;
 
-use SpecShaper\GdprBundle\Annotations\PersonalData;
+use Doctrine\DBAL\Types\Type;
+use SpecShaper\GdprBundle\Types\PersonalDataType;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
