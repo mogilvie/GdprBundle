@@ -66,6 +66,10 @@ class PersonalDataTransformer implements DataTransformerInterface
             return 'XXX';
         }
 
+        if(!is_object($personalData)){
+            return $personalData;
+        }
+
 
 
         return $personalData->getData();
