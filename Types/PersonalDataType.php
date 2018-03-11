@@ -3,8 +3,7 @@
 namespace SpecShaper\GdprBundle\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\ArrayType;
-use Doctrine\DBAL\Types\ConversionException;
+use Doctrine\DBAL\Types\ObjectType;
 use SpecShaper\GdprBundle\Model\PersonalData;
 
 /**
@@ -12,21 +11,41 @@ use SpecShaper\GdprBundle\Model\PersonalData;
  *
  * @author Mark Ogilvie
  */
-final class PersonalDataType extends ArrayType
+final class PersonalDataType extends ObjectType
 {
     const NAME = 'personal_data';
-    /**
-     * @param array            $fieldDeclaration
-     * @param AbstractPlatform $platform
-     *
-     * @return string
-     */
-    public function getSqlDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
-    {
-        // return the SQL used to create your column type. To create a portable column type, use the $platform.
-        return $platform->getJsonTypeDeclarationSQL($fieldDeclaration);
 
-    }
+    const TYPE_CURRENCY = "currency";
+    const TYPE_DATE = "date";
+    const TYPE_DATE_TIME = "dateTime";
+    const TYPE_DECIMAL = "decimal";
+    const TYPE_FLOAT = "float";
+    const TYPE_INTEGER = "integer";
+    const TYPE_STRING = "string";
+    const TYPE_TEXT = "text";
+    const TYPE_BOOLEAN = "boolean";
+
+
+//    public function getColumnDefinition(array $tableColumn, AbstractPlatform $platform)
+//    {
+//        $tableColumn += ['default' => null, 'null' => null, 'comment' => null];
+//        $options = [
+//            'length'        => 0,
+//            'unsigned'      => null,
+//            'fixed'         => null,
+//            'default'       => $tableColumn['default'],
+//            'notnull'       => (bool) ($tableColumn['null'] != 'YES'),
+//            'scale'         => null,
+//            'precision'     => null,
+//            'autoincrement' => false,
+//            'comment'       => empty($tableColumn['comment']) ? null : $tableColumn['comment'],
+//        ];
+//        $column = new Column($tableColumn['field'], $this, $options);
+//        if (preg_match_all("/'([^']+)'/", $tableColumn['type'], $matches)) {
+//            $column->setCustomSchemaOption('values', $matches[1]);
+//        }
+//        return $column;
+//    }
 
     public function convertToPHPValue($value, AbstractPlatform $platform)
     {
@@ -35,11 +54,39 @@ final class PersonalDataType extends ArrayType
             return null;
         }
 
+        $value = (is_resource($value)) ? stream_get_contents($value) : $value;
+
+        $personalData = unserialize($value);
+
+        return $personalData;
+    }
+
+
+    /**
+     * @param  \SpecShaper\GdprBundle\Model\PersonalData  $personalData
+     * @param \Doctrine\DBAL\Platforms\AbstractPlatform $platform
+     *
+     * @return null
+     */
+    public function convertToDatabaseValue($value, AbstractPlatform $platform)
+    {
+        // This is executed when the value is written to the database. Make your conversions here, optionally using the $platform.
+//        if (null === $personalData) {
+//            return null;
+//        }
+//
+//        return $personalData->serialize();
+
+        if (empty($value)) {
+            return null;
+        }
+
+        return serialize($value);
+    }
+
+    private function convertArrayToPersonalData(array $value){
         $personalData = new PersonalData();
 
-        if(is_array($value) === false) {
-            $personalData->setData($value);
-        } else {
             $personalData
                 ->setData($value['data'])
                 ->setFormat($value['format'])
@@ -56,41 +103,11 @@ final class PersonalDataType extends ArrayType
                 ->setKeepUntil( $value['keepUntil'])
                 ->setMethodOfReceipt($value['methodOfReturn'])
                 ->setReturnProtection($value['returnProtection'])
-        ;
-        }
-
+            ;
 
         return $personalData;
     }
 
-
-    /**
-     * @param  \SpecShaper\GdprBundle\Model\PersonalData  $personalData
-     * @param \Doctrine\DBAL\Platforms\AbstractPlatform $platform
-     *
-     * @return null
-     */
-    public function convertToDatabaseValue($personalData, AbstractPlatform $platform)
-    {
-        // This is executed when the value is written to the database. Make your conversions here, optionally using the $platform.
-//        if (null === $personalData) {
-//            return null;
-//        }
-//
-//        return $personalData->serialize();
-
-        if (empty($personalData)) {
-            return null;
-        }
-
-        if ($personalData instanceof PersonalData) {
-            return (string) $personalData->serialize();
-        }
-
-        throw ConversionException::conversionFailed($personalData, self::NAME);
-
-
-    }
 
 
     /**
@@ -100,7 +117,5 @@ final class PersonalDataType extends ArrayType
     {
         return self::NAME;
     }
-
-
 
 }

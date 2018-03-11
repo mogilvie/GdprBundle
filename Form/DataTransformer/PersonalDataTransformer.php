@@ -56,32 +56,26 @@ class PersonalDataTransformer implements DataTransformerInterface
      *
      * @return string
      */
-    public function transform($personalData = null)
+    public function transform($data = null)
     {
-        if ($personalData === null) {
+
+        if ($data === null) {
             return '';
         }
 
-        if($personalData->isPurged){
+        if(!is_object($data)){
+            return $data;
+        }
+
+        if($data->isExpired()){
             return 'XXX';
         }
 
-        if(!is_object($personalData)){
-            return $personalData;
-        }
-
-
-
-        return $personalData->getData();
+        return $data->getData();
     }
 
     /**
      * Reverse Transform.
-     *
-     * Get ID arrays returned from magic suggest text form and
-     * gets the matchings categories.
-     *
-     * Create and persist any new Categories.
      *
      * @since   Available since Release 1.0.0
      *
@@ -91,7 +85,6 @@ class PersonalDataTransformer implements DataTransformerInterface
      */
     public function reverseTransform($data)
     {
-
         // Return if nothing to save
         if ($data === null || $data === ' ') {
             return;

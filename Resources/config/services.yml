@@ -15,3 +15,21 @@ services:
             # you can exclude directories or files
             # but if a service is unused, it's removed anyway
             exclude: '../../{Entity,Repository,Tests,Entity/*}'
+
+
+
+    # Subscriber Interface, default is DoctrineEncryptSubscriber but it can be overriden in the app config
+    SpecShaper\GdprBundle\Subscribers\GdprSubscriber:
+        arguments:
+            $isDisabled: '%spec_shaper_encrypt.is_disabled%'
+        tags:
+            - { name: doctrine.event_subscriber, connection: default }
+
+#    # Subscriber Interface, default is DoctrineEncryptSubscriber but it can be overriden in the app config
+#    SpecShaper\EncryptBundle\Subscribers\DoctrineEncryptSubscriberInterface:
+#        class: '%spec_shaper_encrypt.subscriber_class%'
+#        arguments:
+#            $annotationArray: '%spec_shaper_encrypt.annotation_classes%'
+#            $isDisabled: '%spec_shaper_encrypt.is_disabled%'
+#        tags:
+#            - { name: doctrine.event_subscriber, connection: default }

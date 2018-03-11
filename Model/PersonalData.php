@@ -2,8 +2,7 @@
 
 namespace SpecShaper\GdprBundle\Model;
 
-use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\ArrayType;
+use Symfony\Component\Intl\NumberFormatter\NumberFormatter;
 
 /**
  * Personal Data Object.
@@ -16,6 +15,7 @@ class PersonalData
     const ID_METHOD_INDIRECT = 'INDIRECT';
 
     const DISPOSE_BY_DELETION = 'DELETE';
+    const DISPOSE_BY_SET_NULL = 'SET_NULL';
     const DISPOSE_BY_AGGREGATE = 'AGGREGATE';
     const DISPOSE_BY_ANONYMITY = 'ANONYMITY';
 
@@ -27,7 +27,9 @@ class PersonalData
     const TRANSFER_METHOD_REGISTERED_POST  = 'REGISTERED_POST';
     const TRANSFER_METHOD_PHONE  = 'PHONE';
 
+    const FORMAT_DATE = 'DATE';
     const FORMAT_DATETIME = 'DATETIME';
+    const FORMAT_CURRENCY = 'CURRENCY';
     const FORMAT_STRING = 'STRING';
     const FORMAT_FLOAT = 'FLOAT';
     const FORMAT_INTEGER = 'INTEGER';
@@ -40,6 +42,16 @@ class PersonalData
      * @var string
      */
     public $data;
+
+    /**
+     * @var \DateTimeInterface
+     */
+    public $createdOn;
+
+    /**
+     * @var \DateTimeInterface
+     */
+    public $updatedOn;
 
     /**
      * The format that the data is stored in.
@@ -65,11 +77,11 @@ class PersonalData
     public $scale;
 
     /**
-     * True if the data has been purged.
+     * True if the data isExpired.
      *
      * @var boolean
      */
-    public $isPurged;
+    public $isExpired;
 
     /**
      * True if the information is classified as sensitive personal information.
@@ -160,10 +172,42 @@ class PersonalData
      */
     public $returnProtection;
 
+    /**
+     * Return a string of the data based on data format
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        // If the data is expired then return the raw data.
+        if($this->isExpired === true){
+            return $this->getData();
+        }
+
+        // If the data is current then format it according to type.
+        switch($this->getFormat()){
+            case PersonalData::FORMAT_DATE:
+                $string = $this->getData()->format('d M Y');
+                break;
+            case PersonalData::FORMAT_DATETIME:
+                $string = $this->getData()->format('d M Y h:m');
+                break;
+            case PersonalData::FORMAT_CURRENCY:
+                $f = new NumberFormatter("en", NumberFormatter::CURRENCY);
+                $string = $f->formatCurrency($this->getData(), "EUR");
+                break;
+            default:
+                $string = $this->getData();
+        }
+
+        return $string;
+    }
+
     public function __construct(){
 
         $this->isSensitive = false;
         $this->isEncrypted = false;
+        $this->isExpired = false;
 
         return $this;
     }
@@ -177,40 +221,26 @@ class PersonalData
     {
         return (array) $this;
 
-//        return [
-//            'data' => $this->data,
-//            'isSensitive' => $this->isSensitive,
-//            'isEncrypted' => $this->isEncrypted,
-//            'identifiableBy' => $this->identifiableBy,
-//            'providedBy' => $this->providedBy,
-//            'methodOfReceipt' => $this->methodOfReceipt,
-//            'receiptProtection'=> $this->receiptProtection,
-//            'retainFor' => $this->retainFor,
-//            'disposeBy' => $this->disposeBy,
-//            'keepUntil' => $this->keepUntil,
-//            'methodOfReturn' =>$this->methodOfReturn,
-//            'returnProtection' =>$this->returnProtection
-//        ];
     }
 
     /**
      * @return bool
      */
-    public function isPurged(): bool
+    public function isExpired(): ?bool
     {
-        return $this->isPurged;
+        return $this->isExpired;
     }
 
     /**
-     * Set IsPurged.
+     * Set IsExpired.
      *
-     * @param bool $isPurged
+     * @param bool $isExpired
      *
      * @return PersonalData
      */
-    public function setIsPurged(bool $isPurged): PersonalData
+    public function setIsExpired(bool $isExpired): PersonalData
     {
-        $this->isPurged = $isPurged;
+        $this->isExpired = $isExpired;
 
         return $this;
     }
@@ -526,7 +556,7 @@ class PersonalData
     /**
      * @return string
      */
-    public function getFormat(): string
+    public function getFormat(): ?string
     {
         return $this->format;
     }
@@ -585,6 +615,50 @@ class PersonalData
     public function setScale(int $scale): PersonalData
     {
         $this->scale = $scale;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function getCreatedOn(): \DateTimeInterface
+    {
+        return $this->createdOn;
+    }
+
+    /**
+     * Set CreatedOn.
+     *
+     * @param \DateTimeInterface $createdOn
+     *
+     * @return PersonalData
+     */
+    public function setCreatedOn(\DateTimeInterface $createdOn): PersonalData
+    {
+        $this->createdOn = $createdOn;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function getUpdatedOn(): \DateTimeInterface
+    {
+        return $this->updatedOn;
+    }
+
+    /**
+     * Set UpdatedOn.
+     *
+     * @param \DateTimeInterface $updatedOn
+     *
+     * @return PersonalData
+     */
+    public function setUpdatedOn(\DateTimeInterface $updatedOn): PersonalData
+    {
+        $this->updatedOn = $updatedOn;
 
         return $this;
     }

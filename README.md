@@ -13,7 +13,7 @@ Features include:
 ## Version History
 
 ### Version 1
-Version 1of this project used annotations to classify entity parameter personal data.  
+Version 1 of this project used annotations to classify entity parameter personal data.  
 This unfortunatly could not be extended to managing live data, it runs into problems where data
 become expired. What should get displayed instead? How can live data status be reported with annotations?
 
@@ -22,18 +22,18 @@ Version 1 Features:
 - [x] Generate a summary report of all entity parameters and GDPR annotations.
 
 ### Version 2 
-Version 2 will use a new PersonalData entity to store the GDPR parameters associated with the personal data parameter.
+Version 2 uses a PersonalData entity to store the GDPR parameters associated with the personal data parameter.
 
-A custom twig function will then be used to:
+A custom twig function can be used to:
 - Decrypt any encrypted data
 - Display current data in its correct format.
 - Display deleted/aggregated/annonymised data once it has been sanitised
 
 Version 2 Features:
 
-- [ ] Create a storage entity
-- [ ] Create twig templates for entity to handle displaying expired data.
-- [ ] Create a migration command to create new database fields, and convert PersonalData attributes to PersonalData entity rows.
+- [x] Create a storage entity
+- [x] Create twig templates for entity to handle displaying expired data.
+- [x] Create a migration command to create new database fields, and convert PersonalData attributes to PersonalData entity rows.
 - [ ] Create disposal classes and service
 - [ ] Create a command to dispose of data
 - [ ] Implement a cron task to dispose of data
@@ -114,6 +114,7 @@ class AppKernel extends Kernel
 ## Step 2: Configure the bundle
 
 Geneate a 256 bit 32 character key using the command tool in the Encrypt bundle
+
 ```
 $ bin/console encrypt:genkey
 ```
@@ -128,14 +129,14 @@ Add your encryption key to the parameters file.
     
 ```
 
-Configure the EncryptBundle to use the GdprBundle encryption subscriber. Or point to your own custom subscriber.
+Configure the EncryptBundle.
+
 ```yaml
 // app/config/config.yml
 
     ...
     spec_shaper_encrypt:
         is_disabled: false
-        subscriber_class: 'SpecShaper\GdprBundle\Subscribers\GdprSubscriber'
 
 ```   
 You can disable encryption of the database by setting deleting is_disabled or setting it true.
@@ -151,75 +152,80 @@ Configure the routing to access the reports:
         prefix:   /gdpr
 
 ```
-You should make soure that the /gdpr path is behind a firewall in your security settings.  
+You should make soure that the /gdpr path is behind a firewall in your security settings.
 
+Add the personal_data doctrine type to doctrine
+```yaml
+// app/config/config.yml
+    doctrine:
+        dbal:
+            types:
+                personal_data:  SpecShaper\GdprBundle\Types\PersonalDataType
+```
 
-## Step 3a: Create the entities if using the PersonalData object.
-Add the Annotation entity to the declared classes in the entity.
+## Step 3: Create the entities if using the new personal_data type.
+User the personal_data column type, and pass the options.
+
+```php
+<?php
+    /**
+     * @var string
+     *
+     * @ORM\Column(type="personal_data", nullable=true, options={
+     *     "format" = "text",
+     *     "isSensitive"=false,
+     *     "isEncrypted"=true,
+     *     "identifiableBy"="Can be used to identify an individual with tax records",
+     *     "providedBy"="The employee, revenue, the employer",
+     *     "purposeFor"="Used to submit tax returns to revenue and to employee",
+     *     "retainFor"="6 years",
+     *     "disposeBy"="Set null"
+     * })
+     */
+    protected $bankAccountNumber;
+   
+```
+
+## Step 4: Converting your database.
+
+Use the command below to update your database.
+
+```
+$bin/console gdpr:update
+```
+
+The command will find all Column annotations of type personal_data and convert the stored value to a PersonalData object.
+
+## Step 5: Use in forms
+
+Use the PersonalDataType in forms. Note that this is different from the doctrine PersonalDataType.
 
 ```php
 <?php
 ...
-use SpecShaper\GdprBundle\Annotations\PersonalData;
-```
-
-Add the annotation '@PersonalData' to the parameters that you want to record.
-
-```
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(type="PersonalData", nullable=true)
-     */
-    protected $dateOfBirth;
-   
-```
-
-For DateTime parameters store the date as a string, and use the getters and setters
-to convert that string.
-
-You may also need to create a DataTransformer if you are using the parameter in a form
-with the DateType formtype.
-
-## Step 3b: Create the entities if using the annotation method.
-Add the Annotation entity to the declared classes in the entity.
-
-```php
-<?php
+use SpecShaper\GdprBundle\Form\Type\PersonalDataType;
 ...
-use SpecShaper\GdprBundle\Annotations\PersonalData;
+
+    $builder    
+        ->add('iban', PersonalDataType::class, array(
+            'required' => true,
+            'label' => 'label.iban',
+            'attr' => array(
+                'placeholder' => 'placeholder.aValidInternationalBankAccountNumber'
+            ),
+            'constraints' => array(
+                new Iban()
+            )
+        ))
+        ;
 ```
 
-Add the annotation '@PersonalData' to the parameters that you want to record.
+The personal data cannot be validated via the entity constraints. Instead, you must validate the entered value
+here in the form before it is passed to the entity.
 
-```
-    /**
-     * @var \DateTime
-     *
-     * @PersonalData(
-     *     isSensitive=false,
-     *     isEncrypted=true,
-     *     identifiableBy="Can be associated using other records",
-     *     providedBy="The employee, revenue, the employer",
-     *     purposeFor="Used to check the employee is not under age",
-     *     retainFor="6 years",
-     *     disposeBy="Aggregate into decades"
-     * )
-     *
-     * @ORM\Column(type="string", nullable=true)
-     */
-    protected $dateOfBirth;
-   
-```
+Any custom validators you create should use the $personalData->getData() to get the actual value stored.
 
-For DateTime parameters store the date as a string, and use the getters and setters
-to convert that string.
-
-You may also need to create a DataTransformer if you are using the parameter in a form
-with the DateType formtype.
-
-
-## Step 4: Decrypt in templates
+## Step 5: Decode in templates
 
 If you query a repository using a select method, or get an array result 
 then the doctrine onLoad event subscriber will not decyrpt any encrypted
@@ -228,10 +234,17 @@ values.
 In this case, use the twig filter to decrypt your value when rendering.
 
 ```
-{{ employee.bankAccountNumber | decrypt }}
+{{ employee.bankAccountNumber | personal_data }}
 ```
 
-## Step 5: Reportings
+Where a personalData object is present in the form, then it the toString method will return a formatted
+representation of the data according to the format defined in the entity.
+
+Otherwise use the personal_data twig filter to format the object data.
+
+Todo: The twig_filter for personal data is configured to pass options. Expand on the display options.
+
+## Step 6: Reportings
 
 ### Coverage Report
 
