@@ -248,32 +248,32 @@ If you do have custom validators then you will need to use the getData method on
 ## Step 5: Decode in templates
 To view your data in a twig template:
 ```
-{{ employee.bankAccountNumber }}
+{{ employee.bankAccount.iban }}
 ```
 This will call the toString method of the PersonalData object, which will convert the data to its format as set in the entity field
 annotation.  
 
 If you want to access the data without any default conversion then use:
 ```
-{{ employee.bankAccountNumber.data }}
+{{ employee.bankAccount.iban.data }}
 ```
 If you query a repository using a select method, or get an array result 
 then the doctrine onLoad event subscriber will not decyrpt any encrypted
 values.
 
-In this case, use the twig filter to decrypt your value when rendering.
+In this case, use the twig_filter to decrypt your value when rendering.
 
 ```
-{{ employee.bankAccountNumber.data | personal_data }}
+{{ employee.bankAccount.iban.data | personal_data }}
 ```
 Todo: Use the twig_filter for personal_data to pass rendering options:
 ```
-{{ employee.bankAccountNumber.data | personal_data("date", "d M Y") }}
+{{ employee.bankAccount.iban.data | personal_data("date", "d M Y") }}
 {{ employee.salary.data | personal_data("currency", "EUR") }}
 {{ employee.height.data | personal_data("decimal", 2) }}
 ```
 
-## Step 6: Reportings
+## Step 6: Reporting
 
 ### Coverage Report
 
@@ -283,3 +283,11 @@ If any of the parameters contain the PersonalData attribute then it will also li
 
 Note that at the moment we are only pulling information from the default entity manager. I need to
 improve the coverage report to get all entityManagers.
+
+### History Report
+@todo Not yet written.
+
+A report of log entries for:
+- PersonalData object creation and updates.
+- PersonalData object disposal.
+- PersonalData objects exported.
