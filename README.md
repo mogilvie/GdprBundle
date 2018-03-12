@@ -175,14 +175,15 @@ User the personal_data column type, and pass the options.
      *     "format" = "text",
      *     "isSensitive"=false,
      *     "isEncrypted"=true,
-     *     "identifiableBy"="Can be used to identify an individual with tax records",
-     *     "providedBy"="The employee, revenue, the employer",
-     *     "purposeFor"="Used to submit tax returns to revenue and to employee",
+     *     "idMethod"="INDIRECT",
+     *     "identifiableBy"="Can be used to identify an individual if compared with third party database",
+     *     "providedBy"="The employee, the employer",
+     *     "purposeFor"="Used to pay employees by SEPA",
      *     "retainFor"="P6Y",
-     *     "disposeBy"="SET_NULL"
-     *     "methodOfReceipt"={"HTTPS"}
-     *     "receiptProtection"={"TSS"}
-     *     "methodOfReturn"={"HTTPS", "PDF"}
+     *     "disposeBy"="SET_NULL",
+     *     "methodOfReceipt"={"HTTPS"},
+     *     "receiptProtection"={"TSS"},
+     *     "methodOfReturn"={"HTTPS", "PDF"},
      *     "returnProtection"={"TSS","ENCRYPTED_PDF"}
      * })
      */
