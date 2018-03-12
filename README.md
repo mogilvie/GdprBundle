@@ -178,7 +178,7 @@ User the personal_data column type, and pass the options.
      *
      * @GdprAssert\PersonalData({
      *     @Assert\NotBlank,
-     *     @Assert\Length(max=50)
+     *     @Assert\Iban
      * })
      *
      * @ORM\Column(type="personal_data", nullable=true, options={
