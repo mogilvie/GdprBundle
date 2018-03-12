@@ -178,13 +178,18 @@ User the personal_data column type, and pass the options.
      *     "identifiableBy"="Can be used to identify an individual with tax records",
      *     "providedBy"="The employee, revenue, the employer",
      *     "purposeFor"="Used to submit tax returns to revenue and to employee",
-     *     "retainFor"="6 years",
-     *     "disposeBy"="Set null"
+     *     "retainFor"="P6Y",
+     *     "disposeBy"="SET_NULL"
+     *     "methodOfReceipt"={"HTTPS"}
+     *     "receiptProtection"={"TSS"}
+     *     "methodOfReturn"={"HTTPS", "PDF"}
+     *     "returnProtection"={"TSS","ENCRYPTED_PDF"}
      * })
      */
     protected $bankAccountNumber;
    
 ```
+Look at the PersonalData object constants for the full range of options available.
 
 ## Step 4: Converting your database.
 
