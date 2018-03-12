@@ -168,8 +168,18 @@ User the personal_data column type, and pass the options.
 
 ```php
 <?php
+    ...
+    use Symfony\Component\Validator\Constraints as Assert;
+    use SpecShaper\GdprBundle\Validator\Constraints as GdprAssert;
+    ...
+    
     /**
      * @var string
+     *
+     * @GdprAssert\PersonalData({
+     *     @Assert\NotBlank,
+     *     @Assert\Length(max=50)
+     * })
      *
      * @ORM\Column(type="personal_data", nullable=true, options={
      *     "format" = "STRING",
@@ -191,6 +201,9 @@ User the personal_data column type, and pass the options.
    
 ```
 Look at the PersonalData object constants for the full range of options available.
+
+TODO: Working on a PersonalData Validator that will allow validation of the field data against standard symfony constraints.
+In the meantime use the form constraints.
 
 ## Step 4: Converting your database.
 
@@ -226,7 +239,7 @@ use SpecShaper\GdprBundle\Form\Type\PersonalDataType;
         ;
 ```
 
-The PersonalData object cannot be validated via the symfony validation constraints when defined within an entitys. Instead, you must validate the entered value in the form before it gets passed to the entity.
+The PersonalData object cannot be directly validated via the symfony validation constraints when defined within an entitys. Instead, you must validate the entered value in the form before it gets passed to the entity.
 
 If you do have custom validators then you will need to use the getData method on the PersonalData object and validate this value.
 
