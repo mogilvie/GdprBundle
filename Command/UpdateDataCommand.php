@@ -162,8 +162,10 @@ class UpdateDataCommand extends ContainerAwareCommand
                     // Get the original data from the query.
                     $personalData = $result['originalData'];
 
+                    dump($personalData);
+
                     // If it is not already a personal data object then convert it to one.
-                    if (!unserialize($personalData) instanceof PersonalData) {
+                    if ($personalData instanceof PersonalData) {
                         $personalData = $this->createPersonalData($personalData);
                     }
 
