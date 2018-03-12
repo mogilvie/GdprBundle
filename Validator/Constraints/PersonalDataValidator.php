@@ -19,7 +19,7 @@ class PersonalDataValidator extends ConstraintValidator
     public function validate($value, Constraint $constraint)
     {
         if (!$constraint instanceof PersonalData) {
-            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\All');
+            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\PersonalData');
         }
 
         if (null === $value) {
