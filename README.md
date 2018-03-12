@@ -174,6 +174,8 @@ User the personal_data column type, and pass the options.
     ...
     
     /**
+     * Iban bank account number.
+     *
      * @var string
      *
      * @GdprAssert\PersonalData({
@@ -197,7 +199,7 @@ User the personal_data column type, and pass the options.
      *     "returnProtection"={"TSS","ENCRYPTED_PDF"}
      * })
      */
-    protected $bankAccountNumber;
+    protected $iban;
    
 ```
 Look at the PersonalData object constants for the full range of options available.
