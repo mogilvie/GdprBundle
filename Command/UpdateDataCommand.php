@@ -1,14 +1,5 @@
 <?php
 
-/*
- * This file is part of the SpecShaper Package
- * It extends the symfony package Generator
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-
 namespace SpecShaper\GdprBundle\Command;
 
 use Doctrine\Common\Annotations\AnnotationReader;
@@ -25,15 +16,14 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Get all routes command.
+ * Update data command.
  *
- * A command to dump all the valid routes to a file.
+ * A command to convert a database to personal_data types, and update PersonalData entities to
+ * match the entity filed annotations.
  *
- * Used to help with getting routes for the test classes.
+ * terminal command = php bin/console gdpr:update
  *
- * terminal command = php bin/console routes:dump
- *
- * @author Fabien Potencier <fabien@symfony.com>
+ * @author Mark Ogilvie <mark.ogilvie@ogilvieconsulting.net>
  */
 class UpdateDataCommand extends ContainerAwareCommand
 {
@@ -55,8 +45,6 @@ class UpdateDataCommand extends ContainerAwareCommand
         $this
             ->setName('gdpr:update')
             ->setDescription('Command to convert a database entry to a personal data object.')
-//            ->addArgument('payrunId', InputArgument::OPTIONAL, 'Provide a payrun id number?')
-//            ->addOption('yell', null, InputOption::VALUE_NONE, 'If set, the task will yell in uppercase letters')
         ;
     }
 
