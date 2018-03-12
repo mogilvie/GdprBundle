@@ -226,10 +226,9 @@ use SpecShaper\GdprBundle\Form\Type\PersonalDataType;
         ;
 ```
 
-The personal data cannot be validated via the entity constraints. Instead, you must validate the entered value
-here in the form before it is passed to the entity.
+The PersonalData object cannot be validated via the symfony validation constraints when defined within an entitys. Instead, you must validate the entered value in the form before it gets passed to the entity.
 
-Any custom validators you create should use the $personalData->getData() to get the actual value stored.
+If you do have custom validators then you will need to use the getData method on the PersonalData object and validate this value.
 
 ## Step 5: Decode in templates
 To view your data in a twig template:
