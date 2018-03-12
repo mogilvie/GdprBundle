@@ -163,7 +163,7 @@ class UpdateDataCommand extends ContainerAwareCommand
                     $personalData = $result['originalData'];
 
                     // If it is not already a personal data object then convert it to one.
-                    if (!$personalData instanceof PersonalData) {
+                    if (!unserialize($personalData) instanceof PersonalData) {
                         $personalData = $this->createPersonalData($personalData);
                     }
 
@@ -199,9 +199,9 @@ class UpdateDataCommand extends ContainerAwareCommand
 
             foreach ($field as $propertyArray) {
 
-                $orginalColName = $propertyArray['columnName'];
+                $origionalColName = $propertyArray['columnName'];
 
-                $column = $table->getColumn($orginalColName);
+                $column = $table->getColumn($origionalColName);
 
                 $type = Type::getType('personal_data');
 

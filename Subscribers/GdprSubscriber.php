@@ -292,7 +292,7 @@ class GdprSubscriber implements EventSubscriber
                 continue;
             }
 
-            // If the value is not an intance of personal data then throw an error.
+            // If the value is not an instance of personal data then throw an error.
             if (!$value instanceof PersonalData) {
                 $originalData = $value;
                 $value = new PersonalData();
@@ -303,7 +303,7 @@ class GdprSubscriber implements EventSubscriber
                 ;
             }
 
-            // If the required opteration is to encrypt then encrypt the value, unless encryption is turned off.
+            // If the required operation is to encrypt then encrypt the value, unless encryption is turned off.
             if($isFlush) {
                 // Update the PersonalData object with the current entity annotations.
                 $this->updateFromAnnotations(get_class($entity), $refProperty->getName(), $value);
