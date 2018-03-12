@@ -120,7 +120,7 @@ class GdprSubscriber implements EventSubscriber
     /**
      * Update the PersonalData object before we persist it to the database.
      *
-     * Notice that we do not recalculate changes otherwise the password will be written
+     * Notice that we do not recalculate changes otherwise the entity will be written
      * every time (Because it is going to differ from the un-encrypted value)
      *
      * @param OnFlushEventArgs $args
@@ -133,6 +133,7 @@ class GdprSubscriber implements EventSubscriber
         $this->postFlushDecryptQueue = array();
 
         foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
+            // Note that the third parameter is set to true for new entity insertions.
             $this->entityOnFlush($entity, $em, true);
             $unitOfWork->recomputeSingleEntityChangeSet($em->getClassMetadata(get_class($entity)), $entity);
         }
@@ -152,7 +153,6 @@ class GdprSubscriber implements EventSubscriber
      */
     protected function entityOnFlush($entity, EntityManager $em, $isNewEntity = true)
     {
-
         $objId = spl_object_hash($entity);
 
         $fields = array();
@@ -201,8 +201,8 @@ class GdprSubscriber implements EventSubscriber
     }
 
     /**
-     * Listen a postLoad lifecycle event. Checking and decrypt entities
-     * which have @Encrypted annotations
+     * Listen a postLoad lifecycle event.
+     * Decrypt any personal_data if it is encrytpted.
      * @param LifecycleEventArgs $args
      */
     public function postLoad(LifecycleEventArgs $args)
@@ -220,7 +220,7 @@ class GdprSubscriber implements EventSubscriber
     /**
      * Decrypt a value.
      *
-     * If the value is an object, or if it does not contain the suffic <ENC> then return the value iteslf back.
+     * If the value is an object, or if it does not contain the suffic <ENC> then return the value itself back.
      * Otherwise, decrypt the value and return.
      *
      * @param $value
@@ -234,29 +234,6 @@ class GdprSubscriber implements EventSubscriber
 
         return $decrypted;
 
-    }
-
-    /**
-     * @param $allProperties
-     * @return array
-     */
-    public function getEncryptionableProperties($allProperties)
-    {
-        $encryptedFields = [];
-
-        foreach ($allProperties as $refProperty) {
-            /** @var \ReflectionProperty $refProperty */
-
-            foreach($this->annReader->getPropertyAnnotations($refProperty) as $key => $annotation){
-
-                if (in_array(get_class($annotation), $this->annotationArray)) {
-                    $refProperty->setAccessible(true);
-                    $encryptedFields[] = $refProperty;
-                }
-            }
-        }
-
-        return $encryptedFields;
     }
 
     /**
@@ -277,7 +254,6 @@ class GdprSubscriber implements EventSubscriber
      */
     protected function processFields($entity, EntityManager $em, $isFlush = true, $isNewEntity = true)
     {
-
         $properties = $this->getPersonalDataFields($entity, $em);
 
         $unitOfWork = $em->getUnitOfWork();
@@ -292,7 +268,7 @@ class GdprSubscriber implements EventSubscriber
                 continue;
             }
 
-            // If the value is not an instance of personal data then throw an error.
+            // If the value is not an instance of PersonalData then convert it to one.
             if (!$value instanceof PersonalData) {
                 $originalData = $value;
                 $value = new PersonalData();
@@ -303,11 +279,16 @@ class GdprSubscriber implements EventSubscriber
                 ;
             }
 
-            // If the required operation is to encrypt then encrypt the value, unless encryption is turned off.
+            // If the operation is an insertion/update then update with latest annotations and encrypt if required.
+            // If the operation is a load then attempt to decrypt the data field.
             if($isFlush) {
                 // Update the PersonalData object with the current entity annotations.
                 $this->updateFromAnnotations(get_class($entity), $refProperty->getName(), $value);
 
+                // Set the updatedOn field
+                $now = new \DateTime('now');
+                $value->setUpdatedOn($now);
+                
                 // If encrypt bundle is not disabled, and the annotation is supposed to encrypt
                 if($this->isDisabled === false && $value->isEncrypted === true) {
                     $encrypted = $this->encryptor->encrypt($value->getData());
@@ -317,16 +298,6 @@ class GdprSubscriber implements EventSubscriber
             } else {
                 $data = $this->decryptValue($value->getData());
                 $value->setData($data);
-            }
-
-            // If saving the entity, then set the updated date. If creating and entity then also set the created date.
-            if($isFlush){
-                $now = new \DateTime('now');
-                $value->setUpdatedOn($now);
-
-                if($isNewEntity){
-                    $value->setCreatedOn($now);
-                }
             }
 
             // Set the PersonalData object back to the entity.
@@ -340,7 +311,6 @@ class GdprSubscriber implements EventSubscriber
 
         return !empty($properties);
     }
-
 
     /**
      * Check if we have entity in decoded registry
@@ -368,7 +338,6 @@ class GdprSubscriber implements EventSubscriber
      */
     protected function getPersonalDataFields($entity, EntityManager $em)
     {
-
         $className = get_class($entity);
 
         if (isset($this->personalDataFieldCache[$className])) {
@@ -390,10 +359,8 @@ class GdprSubscriber implements EventSubscriber
                         $refProperty->setAccessible(true);
                         $personalDataFields[$refProperty->getName()] = $refProperty;
                     }
-
                 }
             }
-
         }
 
         $this->personalDataFieldCache[$className] = $personalDataFields;
@@ -403,24 +370,23 @@ class GdprSubscriber implements EventSubscriber
 
     public function updateFromAnnotations($entity, $field, PersonalData $personalData)
     {
-
         /** @var \ReflectionProperty $refProperty */
         $refProperty = $this->personalDataFieldCache[$entity][$field];
         $annotation = $this->annReader->getPropertyAnnotation($refProperty, Column::class);
 
         $options = $annotation->options;
 
-
         foreach($options as $optionName => $value){
+            // Get the setter for the PersonalData field.
             $method_name = 'set' . ucfirst($optionName);
 
+            // Where the setter exists in the PersonalData class then update, else then throw an error.
             if(method_exists($personalData, $method_name)){
                 $personalData->$method_name($value);
-            } else {
+            } else { 
                 throw new GdprException('Definition of "personal_data" option "' . $optionName . '" does not have a matching setter "'
                 . $method_name . '" in ' .$entity . '::' . $field);
             }
-
         }
 
         return $personalData;
