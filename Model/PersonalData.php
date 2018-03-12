@@ -3,6 +3,7 @@
 namespace SpecShaper\GdprBundle\Model;
 
 use Symfony\Component\Intl\NumberFormatter\NumberFormatter;
+use SpecShaper\GdprBundle\Exception\GdprException;
 
 /**
  * Personal Data Object.
@@ -11,22 +12,37 @@ use Symfony\Component\Intl\NumberFormatter\NumberFormatter;
  */
 class PersonalData
 {
+    /**
+     * How the data item can identify an individual.
+     */
     const ID_METHOD_DIRECT = 'DIRECT';
     const ID_METHOD_INDIRECT = 'INDIRECT';
 
+    /**
+     * What to do with the data when it becomes expired.
+     */
     const DISPOSE_BY_DELETION = 'DELETE';
     const DISPOSE_BY_SET_NULL = 'SET_NULL';
     const DISPOSE_BY_AGGREGATE = 'AGGREGATE';
-    const DISPOSE_BY_ANONYMITY = 'ANONYMITY';
+    const DISPOSE_BY_ANONYMISE = 'ANONYMISE';
 
+    /**
+     * How the data is received or transmitted between the provider and the data store.
+     */
     const TRANSFER_METHOD_HTTP  = 'HTTP';
     const TRANSFER_METHOD_HTTPS  = 'HTTPS';
     const TRANSFER_METHOD_FTP = 'FTP';
     const TRANSFER_METHOD_FTPS = 'FTPS';
+    const TRANSFER_METHOD_PDF = "PDF";
+    const TRANSFER_METHOD_ENCRYPTED_PDF = "ENCRYPTED_PDF";
+    const TRANSFER_METHOD_EMAIL = "EMAIL";
     const TRANSFER_METHOD_POST  = 'POST';
     const TRANSFER_METHOD_REGISTERED_POST  = 'REGISTERED_POST';
     const TRANSFER_METHOD_PHONE  = 'PHONE';
 
+    /**
+     * What format the data is provided in, and should be displayed as by default.
+     */
     const FORMAT_DATE = 'DATE';
     const FORMAT_DATETIME = 'DATETIME';
     const FORMAT_CURRENCY = 'CURRENCY';
@@ -35,7 +51,13 @@ class PersonalData
     const FORMAT_INTEGER = 'INTEGER';
 
     /**
-     * True if the information is classified as sensitive personal information.
+     * The data that is being stored.
+     *
+     * If encryption is enabled then this data is encrypted by the subscriber via the onFlush event.
+     * It is decrypted by the onLoad event.
+     *
+     * When the original data becomes expired then it is replaced with the replacement value as specified
+     * by the disposeBy field.
      *
      * Gender identity, health details, political affiliations.
      *
@@ -44,17 +66,27 @@ class PersonalData
     public $data;
 
     /**
+     * The date time object that the data was created.
+     *
+     * Set in the subscriber via the GdprSubscriber via the UoW insert process.
+     *
      * @var \DateTimeInterface
      */
     public $createdOn;
 
     /**
+     * The date time object when the data was last updated.
+     *
+     * Set in the GdprSubscriber via the UoW update process
+     *
      * @var \DateTimeInterface
      */
     public $updatedOn;
 
     /**
-     * The format that the data is stored in.
+     * The format for the string data.
+     * 
+     * Use the constants provided in this class.
      *
      * @var string
      */
@@ -70,7 +102,7 @@ class PersonalData
     public $length;
 
     /**
-     * The number of digits after the decimal of a number
+     * The number of digits after the decimal of a number.
      *
      * @var integer
      */
@@ -78,6 +110,8 @@ class PersonalData
 
     /**
      * True if the data isExpired.
+     * 
+     * When data becomes expired the original data is replaced with aggregated, nulled or anonymised data.
      *
      * @var boolean
      */
@@ -98,14 +132,31 @@ class PersonalData
      * @var boolean
      */
     public $isEncrypted;
+    
+    /**
+     * The method that the data could be used to identify someone.
+     * Either:
+     * - DIRECT, such as a name, email address
+     * - INDIRECT, such as a street address, job title
+     *
+     * Indirect information is where this particular piece of information might be combined with another
+     * data set to identify an individual.
+     *
+     * @var string
+     */
+    public $idMethod;
 
     /**
+     * Identifiable By
+     *
+     * A note on how this particular piece of data might be used to identify an invididual.
+     *
      * @var string The method by which the information might identify an individual
      */
     public $identifiableBy;
 
     /**
-     * Who provided the data.
+     * Who typically provides the data.
      *
      * Was it user supplied, client supplied, generated?
      *
@@ -115,12 +166,16 @@ class PersonalData
 
     /**
      * How did we receive this information?
-     *  @var string
+     * 
+     * The method of transfer from the supplier to this database.
+     *
+     * @var string
      */
     public $methodOfReceipt;
 
     /**
-     * How is the data protected in transit
+     * How is the data protected in transit.
+     *
      * @var string
      */
     public $receiptProtection;
@@ -135,7 +190,7 @@ class PersonalData
     /**
      * How long the information is to be retained in the database for.
      *
-     * @var string A interval period string such as P6Y
+     * @var string A DateInterval string such as P6Y
      */
     public $retainFor;
 
@@ -288,6 +343,28 @@ class PersonalData
 
         return $this;
     }
+    
+    /**
+     * @return string
+     */
+    public function getIdMethod(): string
+    {
+        return $this->idMethod;
+    }
+
+    /**
+     * Set IdMethod.
+     *
+     * @param string $idMethod
+     *
+     * @return PersonalData
+     */
+    public function setIdMethod(string $idMethod): PersonalData
+    {
+        $this->idMethod = $idMethod;
+
+        return $this;
+    }
 
     /**
      * @return string
@@ -366,13 +443,19 @@ class PersonalData
     /**
      * Set RetainFor.
      *
-     * @param string $retainFor
+     * @param \DateInterval $retainFor
      *
      * @return PersonalData
      */
     public function setRetainFor(string $retainFor): PersonalData
     {
-        $this->retainFor = $retainFor;
+        $interval = new \DateInterval($retainFor);
+        
+        if (0 == $interval->format('s')) {
+             throw new GdprException("RetainFor option period ". $retainFor . " is not a valid \DateTimeInterface duration string");
+        }
+        
+        $this->retainFor = $interval;
 
         return $this;
     }
