@@ -232,7 +232,17 @@ here in the form before it is passed to the entity.
 Any custom validators you create should use the $personalData->getData() to get the actual value stored.
 
 ## Step 5: Decode in templates
+To view your data in a twig template:
+```
+{{ employee.bankAccountNumber }}
+```
+This will call the toString method of the PersonalData object, which will convert the data to its format as set in the entity field
+annotation.  
 
+If you want to access the data without any default conversion then use:
+```
+{{ employee.bankAccountNumber.data }}
+```
 If you query a repository using a select method, or get an array result 
 then the doctrine onLoad event subscriber will not decyrpt any encrypted
 values.
@@ -240,15 +250,14 @@ values.
 In this case, use the twig filter to decrypt your value when rendering.
 
 ```
-{{ employee.bankAccountNumber | personal_data }}
+{{ employee.bankAccountNumber.data | personal_data }}
 ```
-
-Where a personalData object is present in the form, then it the toString method will return a formatted
-representation of the data according to the format defined in the entity.
-
-Otherwise use the personal_data twig filter to format the object data.
-
-Todo: The twig_filter for personal data is configured to pass options. Expand on the display options.
+Todo: Use the twig_filter for personal_data to pass rendering options:
+```
+{{ employee.bankAccountNumber.data | personal_data("date", "d M Y") }}
+{{ employee.salary.data | personal_data("currency", "EUR") }}
+{{ employee.height.data | personal_data("decimal", 2) }}
+```
 
 ## Step 6: Reportings
 
