@@ -43,6 +43,7 @@ class PersonalData
     /**
      * What format the data is provided in, and should be displayed as by default.
      */
+    const FORMAT_STRING = 'STRING';
     const FORMAT_DATE = 'DATE';
     const FORMAT_DATETIME = 'DATETIME';
     const FORMAT_CURRENCY = 'CURRENCY';
