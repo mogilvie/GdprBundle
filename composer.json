@@ -16,15 +16,10 @@
     "require" : {
         "php": ">=7.1",
         "symfony/symfony": "^3.2",
-	    "specshaper/encrypt-bundle": "dev-master",
+	"specshaper/encrypt-bundle": "dev-master",
         "roromix/spreadsheetbundle": "dev-master"
     },
     "autoload" : {
         "psr-4": { "SpecShaper\\GdprBundle\\": "" }
-    },
-    "extra" : {
-    "branch-alias" : {
-            "dev-master" : "1.0.x-dev"
-        }
     }
 }
