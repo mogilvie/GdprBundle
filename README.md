@@ -172,7 +172,7 @@ User the personal_data column type, and pass the options.
      * @var string
      *
      * @ORM\Column(type="personal_data", nullable=true, options={
-     *     "format" = "text",
+     *     "format" = "STRING",
      *     "isSensitive"=false,
      *     "isEncrypted"=true,
      *     "idMethod"="INDIRECT",
