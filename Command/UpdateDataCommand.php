@@ -150,8 +150,13 @@ class UpdateDataCommand extends ContainerAwareCommand
                     // Get the original data from the query.
                     $personalData = $result['originalData'];
 
-                    // If is not an object, or if its not already a personal data object then convert it to one.
-                    if (!is_object($personalData) || !$personalData instanceof PersonalData) {
+                    // Check if the string from the database contains the full PersonalData class name. If so then convert to an object
+                    if(stripos($personalData, PersonalData::class)){
+                        $personalData = unserialize($personalData);
+                    }
+
+                    // Check if the data is a PersonalData object, if not then convert it to one.
+                    if (!$personalData instanceof PersonalData) {
                         $personalData = $this->createPersonalData($personalData);
                     }
 
@@ -169,6 +174,8 @@ class UpdateDataCommand extends ContainerAwareCommand
             }
         }
     }
+
+
 
     private function convertOriginalColumnDataType(){
         // Alter the existing column to object data type and nullable.

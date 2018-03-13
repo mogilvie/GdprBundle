@@ -47,7 +47,6 @@ class PersonalData
     const FORMAT_DATE = 'DATE';
     const FORMAT_DATETIME = 'DATETIME';
     const FORMAT_CURRENCY = 'CURRENCY';
-    const FORMAT_STRING = 'STRING';
     const FORMAT_FLOAT = 'FLOAT';
     const FORMAT_INTEGER = 'INTEGER';
 

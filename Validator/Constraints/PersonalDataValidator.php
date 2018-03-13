@@ -5,7 +5,7 @@ namespace SpecShaper\GdprBundle\Validator\Constraints;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
-use SpecShaper\GdprBundle\Validator\Constraints\PersonalData;
+use SpecShaper\GdprBundle\Validator\Constraints\PersonalData as PersonalDataConstraint;
 use SpecShaper\GdprBundle\Model\PersonalData as PersonalDataObject;
 
 /**
@@ -18,8 +18,8 @@ class PersonalDataValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        if (!$constraint instanceof PersonalData) {
-            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\PersonalData');
+        if (!$constraint instanceof PersonalDataConstraint) {
+            throw new UnexpectedTypeException($constraint, PersonalDataConstraint::class);
         }
 
         if (null === $value) {
@@ -27,15 +27,15 @@ class PersonalDataValidator extends ConstraintValidator
         }
 
         if (!$value instanceof PersonalDataObject) {
-            throw new UnexpectedTypeException($value, 'PersonalData');
+            throw new UnexpectedTypeException($value, PersonalDataObject::class);
         }
 
+        // Get the validator.
         $context = $this->context;
-
         $validator = $context->getValidator()->inContext($context);
 
-        foreach ($value as $key => $element) {
-            $validator->atPath('['.$key.']')->validate($element, $constraint->constraints);
-        }
+        // Validate the object against each of the constraints.
+        $validator->validate($value, $constraint->constraints);
+
     }
 }

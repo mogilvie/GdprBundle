@@ -8,12 +8,12 @@
 
 namespace SpecShaper\GdprBundle\Utils;
 
-
 use Doctrine\Common\Annotations\Reader;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Mapping\Column;
 use Roromix\Bundle\SpreadsheetBundle\Factory;
-use SpecShaper\GdprBundle\Annotations\PersonalData;
+use SpecShaper\GdprBundle\Types\PersonalDataType;
 
 class ReportService
 {
@@ -55,13 +55,21 @@ class ReportService
             /** @var \ReflectionProperty $refProperty */
             foreach ($reflectionProperites as $refProperty) {
 
-                $result[$entityClass][$refProperty->getName()] = false;
-
                 foreach ($this->reader->getPropertyAnnotations($refProperty) as $key => $annotation) {
 
-                    if ($annotation instanceof PersonalData) {
-                        $result[$entityClass][$refProperty->getName()] = (array)$annotation;
+                    // Skip any anotation that is not a Column type.
+                    if (!$annotation instanceof Column) {
+                        continue;
                     }
+
+                    $options = false;
+
+                    // If the column type is personal data then store the options in the array.
+                    if ($annotation->type === PersonalDataType::NAME) {
+                        $options = (array)$annotation->options;
+                    }
+
+                    $result[$entityClass][$refProperty->getName()] = $options;
                 }
             }
         }
@@ -96,40 +104,51 @@ class ReportService
             ->setKeywords('Personal Data Report')
             ->setCategory('Personal Data Report');
 
-
-        $headingPopulated = false;
-
         $row = 2;
         $headingRow = 1;
         $activeSheet = $spreadsheet->setActiveSheetIndex(0);
         $classColumn = 'A';
         $paramColumn = 'B';
-        $privateColumnStart = 'C';
+        $privateColumnStart = 3;
 
         $activeSheet->setCellValue($classColumn.$headingRow, 'Entity class');
         $activeSheet->setCellValue($paramColumn.$headingRow, 'Parameter');
-        /** @var Payslip $payslip */
-        foreach($entities as $className => $parameters){
 
-            foreach ($parameters as $parameterName => $personaData) {
+        // Create an array to hold the map of column index number to PersonalData field name.
+        $personalDataColumnMap = [];
+
+        foreach($entities as $className => $fields){
+
+            foreach ($fields as $field => $personaDataValue) {
                 $activeSheet->setCellValue($classColumn.$row, $className);
-                $activeSheet->setCellValue($paramColumn.$row, $parameterName);
+                $activeSheet->setCellValue($paramColumn.$row, $field);
 
-                if($personaData !== false){
-                    $column = $privateColumnStart;
-                    foreach($personaData as $dataField => $value){
+                // If the entity field has personal data then add it to the spreadsheet.
+                if($personaDataValue !== false){
 
+                    // For each personal data field add the value.
+                    foreach($personaDataValue as $dataField => $value){
 
-                        if($headingPopulated === false){
-                            $activeSheet->setCellValue($column.$headingRow, $dataField);
+                        // If the array of personal data fields doesnt contain this one, then add it.
+                        if(!in_array($dataField, $personalDataColumnMap)){
+                            $personalDataColumnMap[] = $dataField;
                         }
-                        $activeSheet->setCellValue($column.$row, $value);
-                        $column++;
+
+                        // Get the column number for the datafield in the array, and add the starting index.
+                        $col = array_search($dataField, $personalDataColumnMap) + $privateColumnStart;
+
+                        $activeSheet->setCellValueByColumnAndRow($col,$row, $value);
                     }
                 }
                 $row++;
             }
 
+        }
+
+        // Add the headings for the personal data fields.
+        foreach($personalDataColumnMap as $key => $field){
+            $col = $key + $privateColumnStart;
+            $activeSheet->setCellValueByColumnAndRow($col,$headingRow, $field);
         }
 
         $activeSheet->setTitle('Coverage Report');
@@ -140,7 +159,6 @@ class ReportService
         // Size the first two columns for class name and property name
         $activeSheet->getColumnDimension('A')->setAutoSize(true);
         $activeSheet->getColumnDimension('B')->setAutoSize(true);
-
 
         // Set the heading row bold.
         $headingRowSytle =  $activeSheet->getStyle('A1:J1');

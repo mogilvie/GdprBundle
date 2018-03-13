@@ -2,6 +2,8 @@
 
 namespace SpecShaper\GdprBundle\Validator\Constraints;
 
+use Symfony\Component\Validator\Constraints\Composite;
+
 /**
  * @Annotation
  * @Target({"PROPERTY"})
