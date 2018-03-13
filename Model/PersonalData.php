@@ -443,18 +443,15 @@ class PersonalData
     /**
      * Set RetainFor.
      *
-     * @param \DateInterval $retainFor
+     * @param string $retainFor
      *
-     * @return PersonalData
+     * @return \SpecShaper\GdprBundle\Model\PersonalData
+     * @throws \Exception
      */
     public function setRetainFor(string $retainFor): PersonalData
     {
         $interval = new \DateInterval($retainFor);
-        
-        if (0 == $interval->format('s')) {
-             throw new GdprException("RetainFor option period ". $retainFor . " is not a valid \DateTimeInterface duration string");
-        }
-        
+
         $this->retainFor = $interval;
 
         return $this;
