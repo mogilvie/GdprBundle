@@ -3,7 +3,7 @@
 namespace SpecShaper\GdprBundle\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\ObjectType;
+use Doctrine\DBAL\Types\ConversionException;
 use SpecShaper\GdprBundle\Model\PersonalData;
 use Doctrine\DBAL\Types\Type;
 
@@ -16,17 +16,6 @@ final class PersonalDataType extends Type
 {
     const NAME = 'personal_data';
 
-    const TYPE_CURRENCY = "currency";
-    const TYPE_DATE = "date";
-    const TYPE_DATE_TIME = "dateTime";
-    const TYPE_DECIMAL = "decimal";
-    const TYPE_FLOAT = "float";
-    const TYPE_INTEGER = "integer";
-    const TYPE_STRING = "string";
-    const TYPE_TEXT = "text";
-    const TYPE_BOOLEAN = "boolean";
-
-
     /**
      * @param array            $fieldDeclaration
      * @param AbstractPlatform $platform
@@ -35,9 +24,8 @@ final class PersonalDataType extends Type
      */
     public function getSqlDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
     {
-        return $platform->getVarcharTypeDeclarationSQL($fieldDeclaration);
+        return $platform->getClobTypeDeclarationSQL($fieldDeclaration);
     }
-
 
     public function convertToPHPValue($value, AbstractPlatform $platform)
     {
@@ -53,55 +41,31 @@ final class PersonalDataType extends Type
         return $personalData;
     }
 
-
     /**
-     * @param  \SpecShaper\GdprBundle\Model\PersonalData  $personalData
-     * @param \Doctrine\DBAL\Platforms\AbstractPlatform $platform
-     *
-     * @return null
+     * @param PersonalData            $value
+     * @param AbstractPlatform $platform
+     * @return mixed|null|string
+     * @throws ConversionException
      */
     public function convertToDatabaseValue($value, AbstractPlatform $platform)
     {
-        // This is executed when the value is written to the database. Make your conversions here, optionally using the $platform.
-//        if (null === $personalData) {
-//            return null;
-//        }
-//
-//        return $personalData->serialize();
 
         if (empty($value)) {
             return null;
         }
 
-        return serialize($value);
-    }
+        if ($value instanceof PersonalData) {
+            return serialize($value);
+        }
 
-    private function convertArrayToPersonalData(array $value){
-        $personalData = new PersonalData();
+        throw ConversionException::conversionFailed($value, self::NAME);
 
-            $personalData
-                ->setData($value['data'])
-                ->setFormat($value['format'])
-                ->setLength($value['length'])
-                ->setScale($value['length'])
-                ->setIsSensitive($value['isSensitive'])
-                ->setIsEncrypted($value['isEncrypted'])
-                ->setIdentifiableBy($value['identifiableBy'])
-                ->setProvidedBy($value['providedBy'])
-                ->setMethodOfReceipt($value['methodOfReceipt'])
-                ->setReceiptProtection($value['receiptProtection'])
-                ->setRetainFor($value['retainFor'])
-                ->setDisposeBy($value['disposeBy'])
-                ->setKeepUntil( $value['keepUntil'])
-                ->setMethodOfReceipt($value['methodOfReturn'])
-                ->setReturnProtection($value['returnProtection'])
-            ;
-
-        return $personalData;
     }
 
     /**
-     * {@inheritdoc}
+     * @param AbstractPlatform $platform
+     *
+     * @return bool
      */
     public function requiresSQLCommentHint(AbstractPlatform $platform)
     {
@@ -115,5 +79,4 @@ final class PersonalDataType extends Type
     {
         return self::NAME;
     }
-
 }
