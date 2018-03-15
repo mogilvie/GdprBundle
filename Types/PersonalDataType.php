@@ -108,7 +108,13 @@ final class PersonalDataType extends ObjectType
         return $personalData;
     }
 
-
+    /**
+     * {@inheritdoc}
+     */
+    public function requiresSQLCommentHint(AbstractPlatform $platform)
+    {
+        return true;
+    }
 
     /**
      * @return string
