@@ -14,7 +14,7 @@ Features include:
 
 ### Version 1
 Version 1 of this project used annotations to classify entity parameter personal data.  
-This unfortunatly could not be extended to managing live data, it runs into problems where data
+This unfortunately could not be extended to managing live data, it runs into problems where data
 become expired. What should get displayed instead? How can live data status be reported with annotations?
 
 Version 1 Features:
@@ -122,9 +122,9 @@ $ bin/console encrypt:genkey
 Add your encryption key to the parameters file.
 
 ```yaml
-// app/config/parameters.yml
+# app/config/parameters.yml
 
-    ...
+    # ...
     encrypt_key: <your_key_here>
     
 ```
@@ -132,9 +132,9 @@ Add your encryption key to the parameters file.
 Configure the EncryptBundle.
 
 ```yaml
-// app/config/config.yml
+# app/config/config.yml
 
-    ...
+    # ...
     spec_shaper_encrypt:
         is_disabled: false
 
@@ -143,9 +143,9 @@ You can disable encryption of the database by setting deleting is_disabled or se
 
 Configure the routing to access the reports:  
 ```yaml
-// app/config/routing.yml
+# app/config/routing.yml
 
-    ...
+   # ...
     spec_shaper_gdpr:
         resource: "@SpecShaperGdprBundle/Controller/"
         type:     annotation
@@ -156,7 +156,7 @@ You should make soure that the /gdpr path is behind a firewall in your security 
 
 Add the personal_data doctrine type to doctrine
 ```yaml
-// app/config/config.yml
+# app/config/config.yml
     doctrine:
         dbal:
             types:
@@ -168,10 +168,10 @@ User the personal_data column type, and pass the options.
 
 ```php
 <?php
-    ...
+    // ...
     use Symfony\Component\Validator\Constraints as Assert;
     use SpecShaper\GdprBundle\Validator\Constraints as GdprAssert;
-    ...
+    // ...
     
     /**
      * Iban bank account number.
@@ -224,10 +224,10 @@ Use the PersonalDataType in forms. Note that this is different from the doctrine
 
 ```php
 <?php
-...
+// ...
 use SpecShaper\GdprBundle\Form\Type\PersonalDataType;
-...
-
+    
+    // ...
     $builder    
         ->add('iban', PersonalDataType::class, array(
             'required' => true,
@@ -280,7 +280,7 @@ Todo: Use the twig_filter for personal_data to pass rendering options:
 
 Access the coverage report by navigating your browser to '\gdpr\reporting\coverage'.      
 This will serve an excel file that contains all the entities and parameters managed by the entity manager.
-If any of the parameters contain the PersonalData attribute then it will also list each of the attributes values.
+If any of the parameters contain the "personal_data" column type it will also list each of the attributes values.
 
 Note that at the moment we are only pulling information from the default entity manager. I need to
 improve the coverage report to get all entityManagers.
