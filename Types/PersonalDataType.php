@@ -5,13 +5,14 @@ namespace SpecShaper\GdprBundle\Types;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\ObjectType;
 use SpecShaper\GdprBundle\Model\PersonalData;
+use Doctrine\DBAL\Types\Type;
 
 /**
  * Personal Data Object.
  *
  * @author Mark Ogilvie
  */
-final class PersonalDataType extends ObjectType
+final class PersonalDataType extends Type
 {
     const NAME = 'personal_data';
 
@@ -26,26 +27,17 @@ final class PersonalDataType extends ObjectType
     const TYPE_BOOLEAN = "boolean";
 
 
-//    public function getColumnDefinition(array $tableColumn, AbstractPlatform $platform)
-//    {
-//        $tableColumn += ['default' => null, 'null' => null, 'comment' => null];
-//        $options = [
-//            'length'        => 0,
-//            'unsigned'      => null,
-//            'fixed'         => null,
-//            'default'       => $tableColumn['default'],
-//            'notnull'       => (bool) ($tableColumn['null'] != 'YES'),
-//            'scale'         => null,
-//            'precision'     => null,
-//            'autoincrement' => false,
-//            'comment'       => empty($tableColumn['comment']) ? null : $tableColumn['comment'],
-//        ];
-//        $column = new Column($tableColumn['field'], $this, $options);
-//        if (preg_match_all("/'([^']+)'/", $tableColumn['type'], $matches)) {
-//            $column->setCustomSchemaOption('values', $matches[1]);
-//        }
-//        return $column;
-//    }
+    /**
+     * @param array            $fieldDeclaration
+     * @param AbstractPlatform $platform
+     *
+     * @return string
+     */
+    public function getSqlDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
+    {
+        return $platform->getVarcharTypeDeclarationSQL($fieldDeclaration);
+    }
+
 
     public function convertToPHPValue($value, AbstractPlatform $platform)
     {
