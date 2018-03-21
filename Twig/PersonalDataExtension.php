@@ -10,6 +10,16 @@ use SpecShaper\GdprBundle\Types\PersonalDataType;
 class PersonalDataExtension extends \Twig_Extension
 {
 
+    const TYPE_CURRENCY = 'currency';
+    const TYPE_DATE = 'date';
+    const TYPE_DATE_TIME = 'date_time';
+    const TYPE_DECIMAL = 'decimal';
+    const TYPE_FLOAT = 'float';
+    const TYPE_INTEGER = 'integer';
+    const TYPE_STRING = 'string';
+    const TYPE_TEXT = 'text';
+    const TYPE_BOOLEAN = 'boolean';
+
     /**
      * @var EncryptorInterface
      */
@@ -51,23 +61,23 @@ class PersonalDataExtension extends \Twig_Extension
 
         // Format the number according to the data type and twig variable display options.
         switch($type){
-            case PersonalDataType::TYPE_CURRENCY:
+            case self::TYPE_CURRENCY:
                 break;
-            case PersonalDataType::TYPE_DATE:
-            case PersonalDataType::TYPE_DATE_TIME:
+            case self::TYPE_DATE:
+            case self::TYPE_DATE_TIME:
                 $displayValue = $displayValue->format($options['format']);
                 break;
-            case PersonalDataType::TYPE_DECIMAL:
+            case self::TYPE_DECIMAL:
                 break;
-            case PersonalDataType::TYPE_FLOAT:
+            case self::TYPE_FLOAT:
                 break;
-            case PersonalDataType::TYPE_INTEGER:
+            case self::TYPE_INTEGER:
                 break;
-            case PersonalDataType::TYPE_STRING:
+            case self::TYPE_STRING:
                 break;
-            case PersonalDataType::TYPE_TEXT:
+            case self::TYPE_TEXT:
                 break;
-                case PersonalDataType::TYPE_BOOLEAN:
+                case self::TYPE_BOOLEAN:
             break;
         }
 
