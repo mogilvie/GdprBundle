@@ -8,9 +8,9 @@
 
 namespace SpecShaper\GdprBundle\Utils\Disposal;
 
-use SpecShaper\GdprBundle\Utils\Disposal\Disposalnterface;
+use SpecShaper\GdprBundle\Utils\Disposal\DisposalInterface;
 
-class SetNull implements \SpecShaper\GdprBundle\Utils\Disposal\Disposalnterface
+class SetNull implements \SpecShaper\GdprBundle\Utils\Disposal\DisposalInterface
 {
 
     public function dispose($parameter)
