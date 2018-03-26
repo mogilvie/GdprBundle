@@ -16,10 +16,12 @@ use SpecShaper\GdprBundle\Utils\Disposal\DisposalInterface;
  * Change a value to a category for anonymisation.
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
+ * @package SpecShaper\GdprBundle\Utils\Disposal
  */
 class Categorise implements DisposalInterface
 {
     public function dispose($parameter){
-       return null;
+
+        return null;
     }
 }

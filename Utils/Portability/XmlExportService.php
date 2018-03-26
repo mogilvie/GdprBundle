@@ -3,13 +3,15 @@
 namespace SpecShaper\GdprBundle\Utils\Portability;
 
 /**
- * ExportService.
+ * XmlExportService.
  *
- * A service to export database information in Excel.
+ * A service to export database information in an XML file.
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
+ *
+ * @version     Release: 1.0.0
  */
-class ExcelExportService implements ExportServiceInterface
+class XmlExportService implements ExportServiceInterface
 {
     
     public function export(){
