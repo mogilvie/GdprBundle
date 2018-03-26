@@ -8,7 +8,7 @@
  */
 namespace SpecShaper\GdprBundle\Utils\Disposal;
 
-use SpecShaper\GdprBundle\Utils\Disposal\Disposalnterface;
+use SpecShaper\GdprBundle\Utils\Disposal\DisposalInterface;
 
 /**
  * Anonymise.

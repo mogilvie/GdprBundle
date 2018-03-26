@@ -9,7 +9,7 @@
 namespace SpecShaper\GdprBundle\Utils\Disposal;
 
 
-interface Disposalnterface
+interface DisposalInterface
 {
 
     public function dispose($parameter);
