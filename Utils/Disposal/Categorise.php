@@ -16,9 +16,6 @@ use SpecShaper\GdprBundle\Utils\Disposal\Disposalnterface;
  * Change a value to a category for anonymisation.
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- * @license     http://URL name
- *
- * @version     Release: 1.0.0
  */
 class Categorise implements DisposalInterface
 {

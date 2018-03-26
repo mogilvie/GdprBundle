@@ -12,9 +12,6 @@ namespace SpecShaper\GdprBundle\Utils\Portability;
  * A factory class to return an export class for the configured data format.
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- * @license     http://URL name
- *
- * @version     Release: 1.0.0
  */
 class ExportFactory
 {

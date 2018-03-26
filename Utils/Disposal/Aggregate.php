@@ -16,9 +16,6 @@ use SpecShaper\GdprBundle\Utils\Disposal\Disposalnterface;
  * Aggregate a value to a range.
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- * @license     http://URL name
- *
- * @version     Release: 1.0.0
  */
 class Aggregate implements DisposalInterface
 {

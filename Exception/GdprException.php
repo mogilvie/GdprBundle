@@ -1,19 +1,7 @@
 <?php
 
 /**
- * AppBundle\Exception\InvitationException.php.
- *
- * LICENSE: Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential. SpecShaper is an SaaS product and no license is
- * granted to copy or distribute the source files.
- *
  * @author     Written by Mark Ogilvie <mark.ogilvie@specshaper.com>, 11 2015
- * @copyright  (c) 2015, SpecShaper - All rights reserved
- * @license    http://URL name
- *
- * @version     Release: 1.0.0
- *
- * @since       Available since Release 1.0.0
  */
 namespace SpecShaper\GdprBundle\Exception;
 

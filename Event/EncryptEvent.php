@@ -3,24 +3,14 @@
 /**
  * SpecShaper\GdprBundle\Event\EncryptEvent.php.
  *
- *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- * @copyright   (c) 2015, SpecShaper - All rights reserved
- * @license     http://URL name
- *
- * @version     Release: 1.0.0
- *
- * @since       Available since Release 1.0.0
  */
-
 namespace SpecShaper\GdprBundle\Event;
 
 /**
  * EncryptEvent.
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- *
- * @version     Release: 1.0.0
  */
 class EncryptEvent
 {

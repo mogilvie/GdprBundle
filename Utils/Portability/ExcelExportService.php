@@ -13,9 +13,6 @@ namespace SpecShaper\GdprBundle\Utils\Portability;
  * A service to export database information in Excel.
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- * @license     http://URL name
- *
- * @version     Release: 1.0.0
  */
 class ExcelExportService implements ExportServiceInterface
 {

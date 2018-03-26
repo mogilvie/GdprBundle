@@ -16,9 +16,6 @@ use SpecShaper\GdprBundle\Utils\Disposal\Disposalnterface;
  * A class to convert a date to an aggregated value;
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- * @license     http://URL name
- *
- * @version     Release: 1.0.0
  */
 class AggregateDate implements DisposalInterface
 {

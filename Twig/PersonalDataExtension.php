@@ -6,7 +6,6 @@ use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
 use SpecShaper\GdprBundle\Model\PersonalData;
 use SpecShaper\GdprBundle\Types\PersonalDataType;
 
-
 class PersonalDataExtension extends \Twig_Extension
 {
 
