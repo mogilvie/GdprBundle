@@ -104,6 +104,7 @@ class AppKernel extends Kernel
         $bundles = array(
             // ...
             new SpecShaper\GdprBundle\SpecShaperGdprBundle(),
+            new SpecShaper\EncryptBundle\SpecShaperEncryptBundle(),
         );
         // ...
     }
@@ -113,13 +114,22 @@ class AppKernel extends Kernel
 
 ## Step 2: Configure the bundle
 
+Add an empty value for `encrypt_key` to your parameters file.
+
+```yaml
+# app/config/parameters.yml
+
+    # ...
+    encrypt_key: ~
+```
+
 Geneate a 256 bit 32 character key using the command tool in the Encrypt bundle
 
 ```
 $ bin/console encrypt:genkey
 ```
 
-Add your encryption key to the parameters file.
+Now, replace your encryption key.
 
 ```yaml
 # app/config/parameters.yml
@@ -152,7 +162,15 @@ Configure the routing to access the reports:
         prefix:   /gdpr
 
 ```
-You should make soure that the /gdpr path is behind a firewall in your security settings.
+
+You should make sure that the /gdpr path is behind a firewall in your security settings.
+```yml
+# app/config/security.yml
+    security:
+        acces_control:
+            # ...
+            - { path: ^/gdpr/, role: [ROLE_SUPER_ADMIN] }
+```
 
 Add the personal_data doctrine type to doctrine
 ```yaml
@@ -202,7 +220,7 @@ User the personal_data column type, and pass the options.
     protected $iban;
    
 ```
-Look at the PersonalData object constants for the full range of options available.
+Look at the [PersonalData](./Model/PersonalData.php) object constants for the full range of options available.
 
 The PersonalData field can be validated in the entity doc comments using the PersonalData constraint
 and defining the default symfony validation constaints as shown above".
