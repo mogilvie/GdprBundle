@@ -42,7 +42,6 @@ class PersonalDataTransformer implements DataTransformerInterface
      */
     public function transform($data = null)
     {
-
         if ($data === null) {
             return '';
         }

@@ -291,10 +291,14 @@ class GdprSubscriber implements EventSubscriber
                 
                 // If encrypt bundle is not disabled, and the annotation is supposed to encrypt
                 if($this->isDisabled === false && $value->isEncrypted === true) {
-                    $encrypted = $this->encryptor->encrypt($value->getData());
-                    $data = $encrypted.DoctrineEncryptSubscriberInterface::ENCRYPTED_SUFFIX;
-                    $value->setData($data);
+                    // If the value does not alreadty have the suffix <ENC> then encrypt it.
+                    if(substr($value->getData(), -5) !== DoctrineEncryptSubscriberInterface::ENCRYPTED_SUFFIX) {
+                        $encrypted = $this->encryptor->encrypt($value->getData());
+                        $data = $encrypted.DoctrineEncryptSubscriberInterface::ENCRYPTED_SUFFIX;
+                        $value->setData($data);
+                    }
                 }
+
             } else {
                 $data = $this->decryptValue($value->getData());
                 $value->setData($data);
@@ -308,6 +312,8 @@ class GdprSubscriber implements EventSubscriber
                 $unitOfWork->setOriginalEntityProperty($oid, $refProperty->getName(), $value);
             }
         }
+
+
 
         return !empty($properties);
     }

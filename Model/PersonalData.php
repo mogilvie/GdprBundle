@@ -524,7 +524,7 @@ class PersonalData
     }
 
     /**
-     * @return blob
+     * @return string
      */
     public function getData()
     {
@@ -534,7 +534,7 @@ class PersonalData
     /**
      * Set Data.
      *
-     * @param blob $data
+     * @param string $data
      *
      * @return PersonalData
      */
