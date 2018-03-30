@@ -241,7 +241,7 @@ class PersonalData
 
         // If the data is expired then return the raw data.
         if($this->isExpired === true){
-            return $this->getData();
+            return (string) $this->getData();
         }
 
         // If the data is current then format it according to type.
@@ -257,7 +257,7 @@ class PersonalData
                 $string = $f->formatCurrency($this->getData(), "EUR");
                 break;
             default:
-                $string = $this->getData();
+                $string = (string) $this->getData();
         }
 
         return $string;
