@@ -234,6 +234,11 @@ class PersonalData
      */
     public function __toString()
     {
+
+        if($this->getData() === null){
+            return '';
+        }
+
         // If the data is expired then return the raw data.
         if($this->isExpired === true){
             return $this->getData();
