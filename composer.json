@@ -23,7 +23,7 @@
         "symfony/validator": "^3.2 || ^4.0",
         "symfony/twig-bundle": "^3.2 || ^4.0",
         "twig/twig": "^2.0",
-        "specshaper/encrypt-bundle": "dev-master",
+        "specshaper/encrypt-bundle": "dev-symfony-4",
         "roromix/spreadsheetbundle": "dev-master"
     },
     "autoload": {
