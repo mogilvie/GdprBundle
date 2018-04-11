@@ -1,25 +1,34 @@
 {
-    "name" : "specshaper/gdpr-bundle",
-    "type" : "symfony-bundle",
-    "description" : "A symfony3 bundle for classifying entity parameters according to GDPR requirements and encrypting data",
+    "name": "specshaper/gdpr-bundle",
+    "type": "symfony-bundle",
+    "description": "A symfony3 bundle for classifying entity parameters according to GDPR requirements and encrypting data",
     "homepage": "https://github.com/mogilvie/GdprBundle",
-    "authors" : [{
-        "name" : "Mark Ogilvie",
-        "email" : "mark.ogilvie@ogilvieconsulting.net"
-    }],
-    "keywords" : [
+    "authors": [
+        {
+            "name": "Mark Ogilvie",
+            "email": "mark.ogilvie@ogilvieconsulting.net"
+        }
+    ],
+    "keywords": [
         "symfony gdpr dpia encryption encrypt bundle"
     ],
-    "license" : [
+    "license": [
         "MIT"
     ],
-    "require" : {
+    "require": {
         "php": ">=7.1",
-        "symfony/symfony": "^3.2",
-	"specshaper/encrypt-bundle": "dev-master",
+        "symfony/console": "^3.2 || ^4.0",
+        "symfony/form": "^3.2 || ^4.0",
+        "symfony/framework-bundle": "^3.2 || ^4.0",
+        "symfony/validator": "^3.2 || ^4.0",
+        "symfony/twig-bundle": "^3.2 || ^4.0",
+        "twig/twig": "^2.0",
+        "specshaper/encrypt-bundle": "dev-master",
         "roromix/spreadsheetbundle": "dev-master"
     },
-    "autoload" : {
-        "psr-4": { "SpecShaper\\GdprBundle\\": "" }
+    "autoload": {
+        "psr-4": {
+            "SpecShaper\\GdprBundle\\": ""
+        }
     }
 }
