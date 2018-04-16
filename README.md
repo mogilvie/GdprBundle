@@ -4,7 +4,7 @@ A bundle to aid with the General Data Protection Regulation requirements.
 
 Features include:
 
-- Written for Symfony verison 3.x.x
+- Written for Symfony verison 3|4
 - Provides annotation for adding to entity parameter doc blocks - this method is being deprecated.
 - Uses a PersonalData object and data transformers.
 - Records values for Data Protection Impact Assesments of entity parameters.
