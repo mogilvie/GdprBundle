@@ -10,6 +10,10 @@ Features include:
 - Records values for Data Protection Impact Assesments of entity parameters.
 - Uses SpecShaper\EncryptBundle to encrypt senstive data
 
+[![Total Downloads](https://poser.pugx.org/roromix/SpreadsheetBundle/downloads.png)](https://packagist.org/packages/roromix/SpreadsheetBundle)
+[![Latest Stable Version](https://poser.pugx.org/roromix/SpreadsheetBundle/v/stable.png)](https://packagist.org/packages/mogilvie/GdprBundle)
+[![Latest Unstable Version](https://poser.pugx.org/roromix/SpreadsheetBundle/v/unstable.png)](https://packagist.org/packages/mogilvie/GdprBundle)
+
 ## Version History
 
 ### Version 1
