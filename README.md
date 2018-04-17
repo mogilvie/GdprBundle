@@ -222,9 +222,7 @@ User the personal_data column type, and pass the options.
 ```
 Look at the [PersonalData](./Model/PersonalData.php) object constants for the full range of options available.
 
-The PersonalData field can be validated in the entity doc comments using the PersonalData constraint
-and defining the default symfony validation constaints as shown above".
-
+The PersonalData field can be validated from within the entity by wrapping regular constraints within the PersonalData constraint.
 
 ## Step 4: Converting your database.
 
@@ -252,6 +250,25 @@ use SpecShaper\GdprBundle\Form\Type\PersonalDataType;
             'label' => 'label.iban',
             'attr' => array(
                 'placeholder' => 'placeholder.aValidInternationalBankAccountNumber'
+            )
+        ))
+        ;
+```
+
+You can validate the entered value in the form before the data transformer converts it to a PersonalData object as normal. There is no need to user the PersonalData constraint within the form.
+
+```php
+<?php
+// ...
+use SpecShaper\GdprBundle\Form\Type\PersonalDataType;
+    
+    // ...
+    $builder    
+        ->add('iban', PersonalDataType::class, array(
+            'required' => true,
+            'label' => 'label.iban',
+            'attr' => array(
+                'placeholder' => 'placeholder.aValidInternationalBankAccountNumber'
             ),
             'constraints' => array(
                 new Iban()
@@ -259,10 +276,6 @@ use SpecShaper\GdprBundle\Form\Type\PersonalDataType;
         ))
         ;
 ```
-
-You can also validate the entered value in the form before it gets passed to the entity.
-
-If have custom validators then you will need to use the getData method on the PersonalData object and validate this value.
 
 ## Step 5: Decode in templates
 To view your data in a twig template:
