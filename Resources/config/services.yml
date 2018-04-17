@@ -16,8 +16,6 @@ services:
             # but if a service is unused, it's removed anyway
             exclude: '../../{Entity,Repository,Tests,Entity/*}'
 
-
-
     # Subscriber Interface, default is DoctrineEncryptSubscriber but it can be overriden in the app config
     SpecShaper\GdprBundle\Subscribers\GdprSubscriber:
         arguments:
