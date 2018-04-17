@@ -9,7 +9,7 @@
     verbose="true">
 
     <testsuites>
-        <testsuite name="PHP Sepa XML">
+        <testsuite name="GdprBundle Tests">
             <directory suffix="Test.php">./tests</directory>
         </testsuite>
     </testsuites>
