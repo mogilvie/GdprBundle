@@ -1,4 +1,4 @@
-# SpecShaper GDPR Bundle
+# GDPR Bundle
 
 A bundle to aid with the General Data Protection Regulation requirements. 
 
@@ -255,7 +255,7 @@ use SpecShaper\GdprBundle\Form\Type\PersonalDataType;
         ;
 ```
 
-You can validate the entered value in the form before the data transformer converts it to a PersonalData object as normal. There is no need to user the PersonalData constraint within the form.
+You can validate the entered value in the form before the data transformer converts it to a PersonalData object as normal. There is no need to use the PersonalData constraint within the form.
 
 ```php
 <?php
