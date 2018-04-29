@@ -255,7 +255,9 @@ use SpecShaper\GdprBundle\Form\Type\PersonalDataType;
         ;
 ```
 
-You can validate the entered value in the form before the data transformer converts it to a PersonalData object as normal. There is no need to use the PersonalData constraint within the form.
+In most cases you validate the entered value in the enitity using the PersonalData constraint to wrap other constraints. This is because the submitted data has been through the data transformer.
+
+If you are validating in the form then you do not need to use the PersonalData constraint. Just use your constraints as normal.
 
 ```php
 <?php
