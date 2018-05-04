@@ -51,6 +51,16 @@ class PersonalData
     const FORMAT_INTEGER = 'INTEGER';
 
     /**
+     * Basis for collection of data.
+     */
+    CONST BASIS_VITAL_INTEREST = 'VITAL_INTEREST';
+    CONST BASIS_PUBLIC_INTEREST = 'PUBLIC_INTEREST';
+    CONST BASIS_CONTRACT_NECESSITY = 'CONTRACT_NECESSTITY';
+    CONST BASIS_LEGAL_REQUIREMENT = 'LEGAL_REQUIREMENT';
+    CONST BASIS_CONSENT = 'CONSENT';
+    CONST BASIS_LEGITIMATE_INTEREST ="LEGITIMATE_INTEREST";
+
+    /**
      * The data that is being stored.
      *
      * If encryption is enabled then this data is encrypted by the subscriber via the onFlush event.
@@ -147,6 +157,21 @@ class PersonalData
     public $idMethod;
 
     /**
+     * What is the basis for collection of this data?
+     *
+     * Use constants:
+     *   - The vital interest of the individual
+     *   - The public interest
+     *   - Contractual necessity
+     *   - Compliance with legal obligations
+     *   - Unambiguous consent of the individual
+     *   - Legitimate interest of the data controller
+     *
+     * @var string
+     */
+    public $basisOfCollection;
+
+    /**
      * Identifiable By
      *
      * A note on how this particular piece of data might be used to identify an invididual.
@@ -226,7 +251,7 @@ class PersonalData
      * @var string
      */
     public $returnProtection;
-
+        
     /**
      * Return a string of the data based on data format
      *
@@ -336,47 +361,25 @@ class PersonalData
     }
 
     /**
-     * Set IsEncrypted.
+     * @return string
+     */
+    public function getBasisOfCollection(): string
+    {
+        return $this->basisOfCollection;
+    }
+
+    /**
+     * Set BasisOfCollection.
      *
-     * @param bool $isEncrypted
+     * @param string $basisOfCollection
      *
      * @return PersonalData
      */
-    public function setIsEncrypted(bool $isEncrypted): PersonalData
+    public function setBasisOfCollection(string $basisOfCollection): PersonalData
     {
-        $this->isEncrypted = $isEncrypted;
+        $this->basisOfCollection = $basisOfCollection;
 
         return $this;
-    }
-    
-    /**
-     * @return string
-     */
-    public function getIdMethod(): string
-    {
-        return $this->idMethod;
-    }
-
-    /**
-     * Set IdMethod.
-     *
-     * @param string $idMethod
-     *
-     * @return PersonalData
-     */
-    public function setIdMethod(string $idMethod): PersonalData
-    {
-        $this->idMethod = $idMethod;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getIdentifiableBy(): string
-    {
-        return $this->identifiableBy;
     }
 
     /**

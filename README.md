@@ -206,6 +206,7 @@ User the personal_data column type, and pass the options.
      *     "isSensitive"=false,
      *     "isEncrypted"=true,
      *     "idMethod"="INDIRECT",
+     *     "basisOfCollection"="LEGITIMATE_INTEREST",
      *     "identifiableBy"="Can be used to identify an individual if compared with third party database",
      *     "providedBy"="The employee, the employer",
      *     "purposeFor"="Used to pay employees by SEPA",
