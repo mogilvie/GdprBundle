@@ -259,7 +259,7 @@ class PersonalData
     /**
      * Keep Until
      *
-     * The date when the data will be kep until
+     * The date when the data will be kept until
      *
      * @var \DateTimeInterface
      */
@@ -324,16 +324,6 @@ class PersonalData
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     *
-     * @return array
-     */
-    public function serialize()
-    {
-        return (array) $this;
-
-    }
 
     /**
      * @return bool
@@ -356,6 +346,30 @@ class PersonalData
 
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function getIdMethod(): string
+    {
+        return $this->idMethod;
+    }
+
+    /**
+     * Set IdMethod.
+     *
+     * @param string $idMethod
+     *
+     * @return PersonalData
+     */
+    public function setIdMethod(string $idMethod): PersonalData
+    {
+        $this->idMethod = $idMethod;
+
+        return $this;
+    }
+
+
 
     /**
      * @return bool
@@ -385,6 +399,17 @@ class PersonalData
     public function isEncrypted(): bool
     {
         return $this->isEncrypted;
+    }
+
+    /**
+     * @param bool $isEncrypted
+     * @return PersonalData
+     */
+    public function setIsEncrypted(bool $isEncrypted): PersonalData
+    {
+        $this->isEncrypted = $isEncrypted;
+
+        return $this;
     }
 
     /**
@@ -581,9 +606,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getMethodOfReceipt(): string
+    public function getMethodOfReceipt(): array
     {
         return $this->methodOfReceipt;
     }
@@ -591,11 +616,11 @@ class PersonalData
     /**
      * Set MethodOfReceipt.
      *
-     * @param string $methodOfReceipt
+     * @param array $methodOfReceipt
      *
      * @return PersonalData
      */
-    public function setMethodOfReceipt(string $methodOfReceipt): PersonalData
+    public function setMethodOfReceipt(array $methodOfReceipt): PersonalData
     {
         $this->methodOfReceipt = $methodOfReceipt;
 
@@ -603,9 +628,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getReceiptProtection(): string
+    public function getReceiptProtection(): array
     {
         return $this->receiptProtection;
     }
@@ -613,11 +638,11 @@ class PersonalData
     /**
      * Set ReceiptProtection.
      *
-     * @param string $receiptProtection
+     * @param array $receiptProtection
      *
      * @return PersonalData
      */
-    public function setReceiptProtection(string $receiptProtection): PersonalData
+    public function setReceiptProtection(array $receiptProtection): PersonalData
     {
         $this->receiptProtection = $receiptProtection;
 
@@ -625,9 +650,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getMethodOfReturn(): string
+    public function getMethodOfReturn(): array
     {
         return $this->methodOfReturn;
     }
@@ -635,11 +660,11 @@ class PersonalData
     /**
      * Set MethodOfReturn.
      *
-     * @param string $methodOfReturn
+     * @param array $methodOfReturn
      *
      * @return PersonalData
      */
-    public function setMethodOfReturn(string $methodOfReturn): PersonalData
+    public function setMethodOfReturn(array $methodOfReturn): PersonalData
     {
         $this->methodOfReturn = $methodOfReturn;
 
@@ -647,9 +672,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getReturnProtection(): string
+    public function getReturnProtection(): array
     {
         return $this->returnProtection;
     }
@@ -657,11 +682,11 @@ class PersonalData
     /**
      * Set ReturnProtection.
      *
-     * @param string $returnProtection
+     * @param array $returnProtection
      *
      * @return PersonalData
      */
-    public function setReturnProtection(string $returnProtection): PersonalData
+    public function setReturnProtection(array $returnProtection): PersonalData
     {
         $this->returnProtection = $returnProtection;
 
