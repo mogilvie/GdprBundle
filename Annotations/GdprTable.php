@@ -11,6 +11,7 @@ namespace SpecShaper\GdprBundle\Annotations;
 use Doctrine\Common\Annotations\Annotation;
 
 /**
+ * @deprecated since v1.02, to be removed in v2.* Use The PersonalData object in the doctrine type instead.
  * @Annotation
  * @Target("CLASS")
  */
