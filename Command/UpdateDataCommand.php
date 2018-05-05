@@ -2,16 +2,19 @@
 
 namespace SpecShaper\GdprBundle\Command;
 
-use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Annotations\Reader;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\Column;
+use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
+use SpecShaper\EncryptBundle\Subscribers\DoctrineEncryptSubscriberInterface;
 use SpecShaper\GdprBundle\Model\PersonalData;
 use SpecShaper\GdprBundle\Types\PersonalDataType;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -25,8 +28,11 @@ use Symfony\Component\Console\Output\OutputInterface;
  *
  * @author Mark Ogilvie <mark.ogilvie@ogilvieconsulting.net>
  */
-class UpdateDataCommand extends ContainerAwareCommand
+class UpdateDataCommand extends Command
 {
+
+    private const TEMP_COL_PREFIX = 'gdpr_temp_';
+
     /** @var EntityManagerInterface */
     private $em;
 
@@ -36,9 +42,36 @@ class UpdateDataCommand extends ContainerAwareCommand
     /** @var Connection */
     private $connection;
 
+    /**
+     * @var array
+     */
     private $personalDataFields = [];
 
+    /**
+     * @var
+     */
     private $comparator;
+
+    private $encryptionDisabled;
+
+    private $encryptor;
+
+    public function __construct(
+        EntityManagerInterface $entityManager,
+        Reader $reader,
+        Connection $defaultConnection,
+        EncryptorInterface $encryptor,
+        $encryptionDisabled
+    )
+    {
+        $this->em = $entityManager;
+        $this->reader = $reader;
+        $this->connection = $defaultConnection;
+        $this->encryptor = $encryptor;
+        $this->encryptionDisabled = $encryptionDisabled;
+
+        parent::__construct();
+    }
 
     protected function configure()
     {
@@ -50,34 +83,46 @@ class UpdateDataCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
-        $this->em = $this->getContainer()->get('doctrine')->getManager();
-        $this->reader = $this->getContainer()->get('annotation_reader');
-        $this->connection = $this->getContainer()->get('doctrine.dbal.default_connection');
+//        $this->em = $this->getContainer()->get('doctrine')->getManager();
+//        $this->reader = $this->getContainer()->get('annotation_reader');
+//        $this->connection = $this->getContainer()->get('doctrine.dbal.default_connection');
         $this->comparator = new Comparator();
 
         // Populate the array with the entities and fields that use the personal_data column type.
-        $this->getPersonalDataFields();
+        $this->getPersonalDataFields($output);
 
         // Create temporary data columns in each entity
-        $this->createTempDataColumns();
+        $this->createTempDataColumns($output);
 
         // Convert the existing data into a PersonalData object in temp column, and null original column.
-        $this->createPersonalDataInTempColumn();
+        $this->createPersonalDataInTempColumn($output);
 
         // Change the original column to personal_data type
-        $this->convertOriginalColumnDataType();
+        $this->convertOriginalColumnDataType($output);
 
         // Copy the converted PersonalData back into the original column
-        $this->reloadPersonalData();
+        $this->reloadPersonalData($output);
 
         // Drop the temp columns
-        $this->dropTempColumns();
+        $this->dropTempColumns($output);
 
     }
 
-    private function createTempDataColumns()
+    /**
+     * Create Temp Data Columns.
+     *
+     * Clones the existing database, then modifies the schema of the clone to add personal data types.
+     * Compares the original schema with the new modified schema
+     * Create a schema diff between the two.
+     * Execute the queries to alter the original database and create temporary personal data columns.
+     *
+     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Schema\SchemaException
+     */
+    private function createTempDataColumns( OutputInterface $output)
     {
+
+        $output->writeln('Creating temporary columns');
 
         $schemaManager = $this->connection->getSchemaManager();
 
@@ -109,6 +154,7 @@ class UpdateDataCommand extends ContainerAwareCommand
                 }
 
             }
+
         }
 
         $platform = $schemaManager->getDatabasePlatform();
@@ -117,16 +163,33 @@ class UpdateDataCommand extends ContainerAwareCommand
 
         $queries = $schemaDiff->toSql($platform); // queries to get from one to another schema.
 
+        // Execute the queres to modify the database.
         foreach ($queries as $query) {
             $this->connection->exec($query);
         }
     }
 
-    private function createPersonalDataInTempColumn()
+    /**
+     * Create PessonalData object in a temporary column.
+     *
+     * Step through all the previously stored personal data columns.
+     * If the original column data is already a personalData type then unserialize it and get the raw data.
+     * Create a new PersonalData object using the current annotation information, serlialse and store in a temp
+     * data column.
+     *
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    private function createPersonalDataInTempColumn( OutputInterface $output)
     {
+
+        $numberOfColumns = count($this->getPersonalDataFields());
+        $output->writeln("Creating personal data objects in $numberOfColumns columns");
 
         // Get the query builder to load existing entity data.
         $queryBuilder = $this->connection->createQueryBuilder();
+
+        $progressBar = new ProgressBar($output, $numberOfColumns);
+        $progressBar->start();
 
         // Loop through all of the personal data fields in all entities.
         foreach ($this->getPersonalDataFields() as $entityClass => $field) {
@@ -150,34 +213,60 @@ class UpdateDataCommand extends ContainerAwareCommand
                     // Get the original data from the query.
                     $personalData = $result['originalData'];
 
-                    // Check if the string from the database contains the full PersonalData class name. If so then convert to an object
-                    if(stripos($personalData, PersonalData::class)){
-                        $personalData = unserialize($personalData);
+                    // Check if the string from the database contains the full PersonalData class name.
+                    // If so then convert to an object and get the raw data.
+                    if (stripos($personalData, PersonalData::class)) {
+                        $personalDataObject = unserialize($personalData);
+                        $personalData = $personalDataObject->getData();
                     }
 
                     // Check if the data is a PersonalData object, if not then convert it to one.
-                    if (!$personalData instanceof PersonalData) {
-                        $personalData = $this->createPersonalData($personalData);
+//                    if (!$personalData instanceof PersonalData) {
+//                        $personalData = $this->createPersonalData($personalData);
+//                    }
+
+
+                    // If the personal data should be encrypted then do so. Otherwise decrypt any existing value.
+                    if (!$this->encryptionDisabled && $propertyArray['annotation']->options['isEncrypted'] === true) {
+                        // If encrypt bundle is not disabled, and the annotation is supposed to encrypt
+
+                        // If the value does not alreadty have the suffix <ENC> then encrypt it.
+                        if(substr($personalData, -5) !== DoctrineEncryptSubscriberInterface::ENCRYPTED_SUFFIX) {
+                            $encrypted = $this->encryptor->encrypt($personalData);
+                            $personalData = $encrypted.DoctrineEncryptSubscriberInterface::ENCRYPTED_SUFFIX;
+                        }
+
+                    } else {
+                        $personalData = $this->encryptor->decrypt($personalData);
                     }
+
+                    // Build a new PersonalData Object based on the current entity annotation fields.
+                    $newPersonalDataObject = $this->createPersonalData($personalData);
 
                     // Update the database with the temporary data, set the original data to null.
                     $this->connection->update(
                         $tableName,
                         array(
                             $propertyArray['columnName'] => null,
-                            $propertyArray['tempColName'] => serialize($personalData)
+                            $propertyArray['tempColName'] => serialize($newPersonalDataObject)
                         ),
                         array('id' => $result['id'])
                     );
-
                 }
             }
+            $progressBar->advance();
         }
+
+        $progressBar->finish();
+        $output->writeln(".");
+
     }
 
 
+    private function convertOriginalColumnDataType( OutputInterface $output)
+    {
+        $output->writeln('Converting original columns to new personal data column type');
 
-    private function convertOriginalColumnDataType(){
         // Alter the existing column to object data type and nullable.
 
         $schemaManager = $this->connection->getSchemaManager();
@@ -205,7 +294,6 @@ class UpdateDataCommand extends ContainerAwareCommand
                     ->setNotnull(false)
                     ->setLength(null)
                     ;
-
             }
         }
 
@@ -219,9 +307,15 @@ class UpdateDataCommand extends ContainerAwareCommand
     }
 
 
-    private function reloadPersonalData(){
+    private function reloadPersonalData( OutputInterface $output)
+    {
+            $output->writeln('Reload personal data to original columns');
+
         // Get the query builder to load existing entity data.
         $queryBuilder = $this->connection->createQueryBuilder();
+
+        $progressBar = new ProgressBar($output, count($this->getPersonalDataFields()));
+        $progressBar->start();
 
         // Loop through all of the personal data fields in all entities.
         foreach ($this->getPersonalDataFields() as $entityClass => $field) {
@@ -255,10 +349,16 @@ class UpdateDataCommand extends ContainerAwareCommand
                     );
                 }
             }
+            $progressBar->advance();
         }
+        $progressBar->finish();
+        $output->writeln(".");
+
     }
 
-    private function dropTempColumns(){
+    private function dropTempColumns( OutputInterface $output)
+    {
+        $output->writeln('Dropping temporary columns');
 
         $schemaManager = $this->connection->getSchemaManager();
 
@@ -300,6 +400,14 @@ class UpdateDataCommand extends ContainerAwareCommand
         }
     }
 
+    /**
+     * Get PersonalData fields.
+     *
+     * Visit every entity and identify fields that contain a personal_data annotation.
+     * Store the field to an array for processing.
+     *
+     * @return array
+     */
     private function getPersonalDataFields()
     {
 
@@ -355,7 +463,7 @@ class UpdateDataCommand extends ContainerAwareCommand
 
     private function getTempColumnName($originalColumnName)
     {
-        return 'gdpr_temp_'.$originalColumnName;
+        return self::TEMP_COL_PREFIX.$originalColumnName;
     }
 
     private function createPersonalData($data)

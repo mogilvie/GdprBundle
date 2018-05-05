@@ -23,6 +23,12 @@ services:
         tags:
             - { name: doctrine.event_subscriber, connection: default }
 
+    SpecShaper\GdprBundle\Command\UpdateDataCommand:
+        arguments:
+            $encryptionDisabled: '%spec_shaper_encrypt.is_disabled%'
+        tags:
+            - { name: 'console.command', command: 'gdpr:update' }
+
 #    # Subscriber Interface, default is DoctrineEncryptSubscriber but it can be overriden in the app config
 #    SpecShaper\EncryptBundle\Subscribers\DoctrineEncryptSubscriberInterface:
 #        class: '%spec_shaper_encrypt.subscriber_class%'
