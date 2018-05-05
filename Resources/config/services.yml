@@ -11,10 +11,10 @@ services:
         public: false
 
     SpecShaper\GdprBundle\:
-            resource: '../../*'
-            # you can exclude directories or files
-            # but if a service is unused, it's removed anyway
-            exclude: '../../{Entity,Repository,Tests,Entity/*}'
+        resource: '../../*'
+        # you can exclude directories or files
+        # but if a service is unused, it's removed anyway
+        exclude: '../../{Entity,Repository,Tests,Entity/*}'
 
     # Subscriber Interface, default is DoctrineEncryptSubscriber but it can be overriden in the app config
     SpecShaper\GdprBundle\Subscribers\GdprSubscriber:
@@ -28,6 +28,10 @@ services:
             $encryptionDisabled: '%spec_shaper_encrypt.is_disabled%'
         tags:
             - { name: 'console.command', command: 'gdpr:update' }
+
+    SpecShaper\GdprBundle\Doctrine\ORM\GdprEntityManager:
+        decorates: Doctrine\ORM\EntityManagerInterface
+        arguments: ['@SpecShaper\GdprBundle\Doctrine\ORM\GdprEntityManager.inner','@SpecShaper\EncryptBundle\Encryptors\EncryptorInterface']
 
 #    # Subscriber Interface, default is DoctrineEncryptSubscriber but it can be overriden in the app config
 #    SpecShaper\EncryptBundle\Subscribers\DoctrineEncryptSubscriberInterface:
