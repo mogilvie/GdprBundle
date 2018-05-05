@@ -53,11 +53,38 @@ class PersonalData
     /**
      * Basis for collection of data.
      */
+    /**
+     * The processing is necessary to protect someone’s life.
+     */
     CONST BASIS_VITAL_INTEREST = 'VITAL_INTEREST';
+
+    /**
+     * The processing is necessary for you to perform a task in the public interest or for your official functions, and
+     * the task or function has a clear basis in law.
+     */
     CONST BASIS_PUBLIC_INTEREST = 'PUBLIC_INTEREST';
+
+    /**
+     * The processing is necessary for a contract you have with the data subject, or
+     * because they have asked you to take specific steps before entering into a contract.
+     */
     CONST BASIS_CONTRACT_NECESSITY = 'CONTRACT_NECESSTITY';
+
+    /**
+     * The processing is necessary for you to comply with the law (not including contractual obligations).
+     */
     CONST BASIS_LEGAL_REQUIREMENT = 'LEGAL_REQUIREMENT';
+
+    /**
+     * The data subject has given clear consent for you to process their personal data for a specific purpose
+     */
     CONST BASIS_CONSENT = 'CONSENT';
+
+    /**
+     * The processing is necessary for your legitimate interests or the legitimate interests of a third party unless
+     * there is a good reason to protect the individual’s personal data which overrides those
+     * legitimate interests. (This cannot apply if you are a public authority processing data to perform your official tasks.)
+     */
     CONST BASIS_LEGITIMATE_INTEREST ="LEGITIMATE_INTEREST";
 
     /**
