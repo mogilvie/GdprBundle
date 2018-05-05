@@ -24,7 +24,6 @@ class ReportService
     {
         $this->entityManager = $entityManager;
         $this->reader = $reader;
-
     }
 
     /**
@@ -136,6 +135,10 @@ class ReportService
 
                         // Get the column number for the datafield in the array, and add the starting index.
                         $col = array_search($dataField, $personalDataColumnMap) + $privateColumnStart;
+
+                        if(is_array($value)){
+                            $value = implode(', ',$value);
+                        }
 
                         $activeSheet->setCellValueByColumnAndRow($col,$row, $value);
                     }
