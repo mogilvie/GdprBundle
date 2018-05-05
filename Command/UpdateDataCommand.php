@@ -36,25 +36,31 @@ class UpdateDataCommand extends Command
     /** @var EntityManagerInterface */
     private $em;
 
-    /** @var AnnotationReader */
+    /** @var Reader*/
     private $reader;
 
     /** @var Connection */
     private $connection;
 
     /**
-     * @var array
+     * @var array An array of the personal_data column types from the entities.
      */
     private $personalDataFields = [];
 
     /**
-     * @var
+     * @var bool True if encryption has been disabled in the app config.
      */
-    private $comparator;
-
     private $encryptionDisabled;
 
+    /**
+     * @var EncryptorInterface
+     */
     private $encryptor;
+
+    /**
+     * @var Comparator
+     */
+    private $comparator;
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -83,9 +89,7 @@ class UpdateDataCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-//        $this->em = $this->getContainer()->get('doctrine')->getManager();
-//        $this->reader = $this->getContainer()->get('annotation_reader');
-//        $this->connection = $this->getContainer()->get('doctrine.dbal.default_connection');
+
         $this->comparator = new Comparator();
 
         // Populate the array with the entities and fields that use the personal_data column type.
@@ -116,6 +120,7 @@ class UpdateDataCommand extends Command
      * Create a schema diff between the two.
      * Execute the queries to alter the original database and create temporary personal data columns.
      *
+     * @param OutputInterface $output
      * @throws \Doctrine\DBAL\DBALException
      * @throws \Doctrine\DBAL\Schema\SchemaException
      */
@@ -152,9 +157,7 @@ class UpdateDataCommand extends Command
                 if (!$table->hasColumn($propertyArray['tempColName'])) {
                     $table->addColumn($propertyArray['tempColName'], Type::OBJECT);
                 }
-
             }
-
         }
 
         $platform = $schemaManager->getDatabasePlatform();
@@ -177,6 +180,7 @@ class UpdateDataCommand extends Command
      * Create a new PersonalData object using the current annotation information, serlialse and store in a temp
      * data column.
      *
+     * @param OutputInterface $output
      * @throws \Doctrine\DBAL\DBALException
      */
     private function createPersonalDataInTempColumn( OutputInterface $output)
@@ -220,12 +224,6 @@ class UpdateDataCommand extends Command
                         $personalData = $personalDataObject->getData();
                     }
 
-                    // Check if the data is a PersonalData object, if not then convert it to one.
-//                    if (!$personalData instanceof PersonalData) {
-//                        $personalData = $this->createPersonalData($personalData);
-//                    }
-
-
                     // If the personal data should be encrypted then do so. Otherwise decrypt any existing value.
                     if (!$this->encryptionDisabled && $propertyArray['annotation']->options['isEncrypted'] === true) {
                         // If encrypt bundle is not disabled, and the annotation is supposed to encrypt
@@ -235,7 +233,6 @@ class UpdateDataCommand extends Command
                             $encrypted = $this->encryptor->encrypt($personalData);
                             $personalData = $encrypted.DoctrineEncryptSubscriberInterface::ENCRYPTED_SUFFIX;
                         }
-
                     } else {
                         $personalData = $this->encryptor->decrypt($personalData);
                     }
@@ -259,10 +256,15 @@ class UpdateDataCommand extends Command
 
         $progressBar->finish();
         $output->writeln(".");
-
     }
 
-
+    /**
+     * Convert Original Column data type to personal_data
+     *
+     * @param OutputInterface $output
+     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Schema\SchemaException
+     */
     private function convertOriginalColumnDataType( OutputInterface $output)
     {
         $output->writeln('Converting original columns to new personal data column type');
@@ -307,6 +309,14 @@ class UpdateDataCommand extends Command
     }
 
 
+    /**
+     * Reload PersonalData
+     *
+     * Move the PersonalData object from the temporary column back to the original column.
+     *
+     * @param OutputInterface $output
+     * @throws \Doctrine\DBAL\DBALException
+     */
     private function reloadPersonalData( OutputInterface $output)
     {
             $output->writeln('Reload personal data to original columns');
@@ -356,6 +366,13 @@ class UpdateDataCommand extends Command
 
     }
 
+    /**
+     * Drop the temporary columns from the schema and remove from the database.
+     *
+     * @param OutputInterface $output
+     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Schema\SchemaException
+     */
     private function dropTempColumns( OutputInterface $output)
     {
         $output->writeln('Dropping temporary columns');
