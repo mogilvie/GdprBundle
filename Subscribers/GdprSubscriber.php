@@ -203,7 +203,9 @@ class GdprSubscriber implements EventSubscriber
     /**
      * Listen a postLoad lifecycle event.
      * Decrypt any personal_data if it is encrytpted.
+     *
      * @param LifecycleEventArgs $args
+     * @throws GdprException
      */
     public function postLoad(LifecycleEventArgs $args)
     {
