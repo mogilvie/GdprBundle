@@ -278,12 +278,17 @@ class PersonalData
      * @var string
      */
     public $returnProtection;
-        
+
     /**
      * Return a string of the data based on data format
      *
      * @return string
      */
+    public function toString()
+    {
+        return $this->__toString();
+    }
+
     public function __toString()
     {
 
