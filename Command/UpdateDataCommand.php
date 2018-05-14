@@ -206,7 +206,7 @@ class UpdateDataCommand extends Command
 
                 // Get all data for the current entity and field.
                 $queryBuilder
-                    ->select('t.id, t.'.$propertyArray['columnName'].' AS originalData')
+                    ->select('t.'. $propertyArray['identifier'] .', t.'.$propertyArray['columnName'].' AS originalData')
                     ->from($propertyArray['tableName'], 't');
 
                 $results = $queryBuilder->execute();
@@ -247,7 +247,7 @@ class UpdateDataCommand extends Command
                             $propertyArray['columnName'] => null,
                             $propertyArray['tempColName'] => serialize($newPersonalDataObject)
                         ),
-                        array('id' => $result['id'])
+                        array($propertyArray['identifier'] => $result[$propertyArray['identifier']])
                     );
                 }
             }
@@ -338,7 +338,7 @@ class UpdateDataCommand extends Command
 
                 // Get all data for the current entity and field.
                 $queryBuilder
-                    ->select('t.id, t.'.$propertyArray['tempColName'].' AS newPersonalData')
+                    ->select('t.'. $propertyArray['identifier'] .', t.'.$propertyArray['tempColName'].' AS newPersonalData')
                     ->from($propertyArray['tableName'], 't');
 
                 $results = $queryBuilder->execute();
@@ -355,7 +355,7 @@ class UpdateDataCommand extends Command
                         array(
                             $propertyArray['columnName'] => $personalData
                         ),
-                        array('id' => $result['id'])
+                        array($propertyArray['identifier'] => $result[$propertyArray['identifier']])
                     );
                 }
             }
@@ -465,6 +465,7 @@ class UpdateDataCommand extends Command
                     // Store the field data information for later use.
                     $this->personalDataFields[$entityClass][$refProperty->getName()] = [
                         'tableName' => $managedEntity->getTableName(),
+                        'identifier' => $managedEntity->getSingleIdentifierColumnName(),
                         'columnName' => $columnName,
                         'tempColName' => $this->getTempColumnName($columnName),
                         'refProperty' => $refProperty,
