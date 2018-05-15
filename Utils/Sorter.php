@@ -7,14 +7,18 @@ class Sorter
 
     const ORDER_DESC = 'DESC';
     const ORDER_ASC = 'ASC';
-    public $firstSortOrder;
+
+    protected $firstSortOrder;
 
     protected $secondSortOrder;
 
-    public function __construct($firstSortOrder, $secondSortOrder)
+    protected $order;
+
+    public function __construct($firstSortOrder, $secondSortOrder, $order = self::ORDER_DESC)
     {
         $this->firstSortOrder = $firstSortOrder;
         $this->secondSortOrder = $secondSortOrder;
+        $this->order = $order;
     }
 
     /**
@@ -22,11 +26,10 @@ class Sorter
      *
      * @param        $a
      * @param        $b
-     * @param string $order
      *
      * @return int
      */
-    public function sortByTwoColumnsCallback($a, $b, $order = self::ORDER_DESC){
+    public function sortByTwoColumnsCallback($a, $b){
 
         $firstOrder = $this->firstSortOrder;
 
@@ -40,7 +43,7 @@ class Sorter
             if ($a[$secondOrder] > $b[$secondOrder]) return 1;
         }
 
-        if($method = $methodArray[$order]) {
+        if($method = $methodArray[$this->order]) {
             return $this->$method($a[$firstOrder],$b[$firstOrder]);
         }
     }
