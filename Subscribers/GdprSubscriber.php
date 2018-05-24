@@ -14,6 +14,9 @@ use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
 use SpecShaper\EncryptBundle\Annotations\Encrypted;
 use SpecShaper\EncryptBundle\Exception\EncryptException;
 use SpecShaper\EncryptBundle\Subscribers\DoctrineEncryptSubscriberInterface;
+use SpecShaper\GdprBundle\Event\AccessEvent;
+use SpecShaper\GdprBundle\Event\AccessEvents;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use SpecShaper\GdprBundle\Exception\GdprException;
 use SpecShaper\GdprBundle\Model\PersonalData;
 use SpecShaper\GdprBundle\Types\PersonalDataType;
@@ -34,6 +37,11 @@ class GdprSubscriber implements EventSubscriber
      * @var EncryptorInterface
      */
     protected $encryptor;
+
+    /**
+     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     */
+    protected $dispatcher;
 
     /**
      * Annotation reader
@@ -70,11 +78,13 @@ class GdprSubscriber implements EventSubscriber
      * @param \SpecShaper\EncryptBundle\Encryptors\EncryptorInterface $encryptor
      * @param                                                         $isDisabled
      */
-    public function __construct(Reader $annReader, EncryptorInterface $encryptor, $isDisabled)
+    public function __construct(Reader $annReader, EncryptorInterface $encryptor, EventDispatcherInterface $dispatcher, $isDisabled)
     {
         $this->annReader = $annReader;
         $this->encryptor = $encryptor;
+        $this->dispatcher = $dispatcher;
         $this->isDisabled = $isDisabled;
+
     }
 
 
@@ -301,9 +311,17 @@ class GdprSubscriber implements EventSubscriber
                     }
                 }
 
+                // Dispatch an event for the persisted value
+                $event = new AccessEvent($value);
+                $this->dispatcher->dispatch(AccessEvents::UPDATE, $event);
+
             } else {
                 $data = $this->decryptValue($value->getData());
                 $value->setData($data);
+
+                // Dispatch an event for the loaded value
+                $event = new AccessEvent($value);
+                $this->dispatcher->dispatch(AccessEvents::LOAD, $event);
             }
 
             // Set the PersonalData object back to the entity.
@@ -314,8 +332,6 @@ class GdprSubscriber implements EventSubscriber
                 $unitOfWork->setOriginalEntityProperty($oid, $refProperty->getName(), $value);
             }
         }
-
-
 
         return !empty($properties);
     }
