@@ -4,6 +4,7 @@
 namespace SpecShaper\GdprBundle\Event;
 
 use SpecShaper\GdprBundle\Model\PersonalData;
+use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Class DisposeEvent
@@ -14,7 +15,7 @@ use SpecShaper\GdprBundle\Model\PersonalData;
  *
  * @package SpecShaper\GdprBundle\Event
  */
-class DisposeEvent
+class DisposeEvent extends Event
 {
     /**
      * The string / object to be encrypted or decrypted

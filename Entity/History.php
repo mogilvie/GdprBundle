@@ -64,6 +64,5 @@ class History
      * @ORM\Column(type="string", nullable=true)
      */
     protected $actionBy;
-    
-  
+
 }
