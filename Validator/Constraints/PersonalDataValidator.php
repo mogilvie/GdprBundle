@@ -26,8 +26,9 @@ class PersonalDataValidator extends ConstraintValidator
             return;
         }
 
-        if (!$value instanceof PersonalDataObject) {
-            throw new UnexpectedTypeException($value, PersonalDataObject::class);
+        if ($value instanceof PersonalDataObject) {
+            //throw new UnexpectedTypeException($value, PersonalDataObject::class);
+            $value = $value->getData();
         }
 
         // Get the validator.
