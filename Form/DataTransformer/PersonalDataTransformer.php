@@ -32,44 +32,47 @@ class PersonalDataTransformer implements DataTransformerInterface
      * Transform.
      *
      * Transfrom from code to form.
-     * Passes straight through as a json string
      *
-     * @since   Available since Release 1.0.0
+     * @param $data
      *
-     * @param PersonalData $personalData
-     *
-     * @return string
+     * @return null|string
      */
     public function transform($data = null)
     {
+        // If null then return an empty space.
         if ($data === null) {
             return '';
         }
 
+        // If the data is not an object then return it as is.
         if(!is_object($data)){
             return $data;
         }
 
-        if($data->isExpired()){
+        // If the data is not an instance of PersonalData object
+        if(!$data instanceof PersonalData) {
+            return $data;
+        }
+
+        // If it is expired then return obscured
+        // @todo use the expiration methods to return a value.
+        if ($data->isExpired()) {
             return 'XXX';
         }
 
+        // Otherwise return the base data.
         return $data->getData();
     }
 
     /**
-     * Reverse Transform.
+     * @param $data
      *
-     * @since   Available since Release 1.0.0
-     *
-     * @param string $ms
-     *
-     * @throws TransformationFailedException if object (issue) is not found.
+     * @return \SpecShaper\GdprBundle\Model\PersonalData|void
      */
     public function reverseTransform($data)
     {
-        // Return if nothing to save
-        if ($data === null || $data === ' ') {
+        // Return if null or white space.
+        if ($data === null || ctype_space($data)) {
             return;
         }
 
