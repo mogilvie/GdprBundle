@@ -425,7 +425,7 @@ class EmployeeRepository extends \Doctrine\ORM\EntityRepository
 }
 ```
 In inject the encryptor into the repository in the controller.
-```
+```php
 <?php
 
 namespace AppBundle\Controller;
