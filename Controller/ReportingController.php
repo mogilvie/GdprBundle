@@ -9,8 +9,7 @@
 namespace SpecShaper\GdprBundle\Controller;
 
 use Roromix\Bundle\SpreadsheetBundle\Factory;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use SpecShaper\GdprBundle\Utils\ReportService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
