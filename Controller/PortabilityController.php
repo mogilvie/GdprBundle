@@ -29,8 +29,8 @@ class PortabilityController extends Controller
      *
      * Action to return the full information held pertaining to an organisation.
      *
-     * @Route("/{id}/owner", name="portability_owner")
-     * @Method("GET")
+     * @Route("/{id}/owner", name="portability_owner", methods={"GET"})
+     *
      */
     public function ownerAction()
     {
@@ -42,8 +42,7 @@ class PortabilityController extends Controller
      *
      * Action to return all the information held pertaining to an individual.
      *
-     * @Route("/{id}/individual", name="portability_individual")
-     * @Method("GET")
+     * @Route("/{id}/individual", name="portability_individual", methods={"GET"})
      */
     public function individualAction()
     {

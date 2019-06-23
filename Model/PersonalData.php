@@ -2,6 +2,8 @@
 
 namespace SpecShaper\GdprBundle\Model;
 
+use SpecShaper\GdprBundle\Utils\Disposal\Anonymise;
+use SpecShaper\GdprBundle\Utils\Disposal\AnonymiseIP;
 use Symfony\Component\Intl\NumberFormatter\NumberFormatter;
 use SpecShaper\GdprBundle\Exception\GdprException;
 
@@ -25,6 +27,9 @@ class PersonalData
     const DISPOSE_BY_SET_NULL = 'SET_NULL';
     const DISPOSE_BY_AGGREGATE = 'AGGREGATE';
     const DISPOSE_BY_ANONYMISE = 'ANONYMISE';
+    const DISPOSE_BY_ANONYMISE_IP = 'ANONYMISE_IP';
+    const DISPOSE_BY_ANONYMISE_DATE = 'ANONYMISE_DATE';
+    const DISPOSE_BY_REGEX_REPLACE = 'REGEX_REPLACE';
 
     /**
      * How the data is received or transmitted between the provider and the data store.
@@ -107,7 +112,7 @@ class PersonalData
      *
      * Set in the subscriber via the GdprSubscriber via the UoW insert process.
      *
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      */
     public $createdOn;
 
@@ -242,7 +247,7 @@ class PersonalData
     /**
      * How long the information is to be retained in the database for.
      *
-     * @var string A DateInterval string such as P6Y
+     * @var \DateInterval A DateInterval string such as P6Y
      */
     public $retainFor;
 
@@ -255,6 +260,13 @@ class PersonalData
      * @var string
      */
     public $disposeBy;
+
+    /**
+     * Disposal method arguments.
+     *
+     * @var array
+     */
+    public $disposeByArgs;
 
     /**
      * Keep Until
@@ -325,6 +337,7 @@ class PersonalData
         $this->isSensitive = false;
         $this->isEncrypted = false;
         $this->isExpired = false;
+        $this->disposeByArgs = [];
 
         return $this;
     }
@@ -373,8 +386,6 @@ class PersonalData
 
         return $this;
     }
-
-
 
     /**
      * @return bool
@@ -498,9 +509,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return \DateInterval|null
      */
-    public function getRetainFor(): string
+    public function getRetainFor(): ?\DateInterval
     {
         return $this->retainFor;
     }
@@ -765,9 +776,9 @@ class PersonalData
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
-    public function getCreatedOn(): \DateTimeInterface
+    public function getCreatedOn(): ?\DateTimeInterface
     {
         return $this->createdOn;
     }
@@ -808,6 +819,26 @@ class PersonalData
         return $this;
     }
 
+    /**
+     * @return array|null
+     */
+    public function getDisposeByArgs(): ?array
+    {
+        return $this->disposeByArgs;
+    }
 
+    /**
+     * Set DisposeByArgs.
+     *
+     * @param array $disposeByArgs
+     *
+     * @return PersonalData
+     */
+    public function setDisposeByArgs(array $disposeByArgs): PersonalData
+    {
+        $this->disposeByArgs = $disposeByArgs;
+
+        return $this;
+    }
 
 }

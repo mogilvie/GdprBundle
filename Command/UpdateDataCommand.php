@@ -226,13 +226,8 @@ class UpdateDataCommand extends Command
 
                     // If the personal data should be encrypted then do so. Otherwise decrypt any existing value.
                     if (!$this->encryptionDisabled && $propertyArray['annotation']->options['isEncrypted'] === true) {
-                        // If encrypt bundle is not disabled, and the annotation is supposed to encrypt
+                        $personalData = $this->encryptor->encrypt($personalData);
 
-                        // If the value does not alreadty have the suffix <ENC> then encrypt it.
-                        if(substr($personalData, -5) !== DoctrineEncryptSubscriberInterface::ENCRYPTED_SUFFIX) {
-                            $encrypted = $this->encryptor->encrypt($personalData);
-                            $personalData = $encrypted.DoctrineEncryptSubscriberInterface::ENCRYPTED_SUFFIX;
-                        }
                     } else {
                         $personalData = $this->encryptor->decrypt($personalData);
                     }
@@ -424,6 +419,7 @@ class UpdateDataCommand extends Command
      * Store the field to an array for processing.
      *
      * @return array
+     * @throws \Doctrine\ORM\Mapping\MappingException
      */
     private function getPersonalDataFields()
     {

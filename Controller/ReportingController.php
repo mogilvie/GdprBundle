@@ -31,8 +31,7 @@ class ReportingController extends Controller
      *
      * Action to return a report of all tables and parameters held, and what the GDPR information is.
      *
-     * @Route("/coverage", name="reporting_coverage")
-     * @Method("GET")
+     * @Route("/coverage", name="reporting_coverage", methods={"GET"})
      */
     public function coverageAction(ReportService $reportSerivce){
 
@@ -57,8 +56,8 @@ class ReportingController extends Controller
     /**
      *
      *
-     * @Route("/{table}/{parameter}/details", name="reporting_details")
-     * @Method("GET")
+     * @Route("/{table}/{parameter}/details", name="reporting_details", methods={"GET"})
+
      */
     public function detailsAction($table, $parameter){
 

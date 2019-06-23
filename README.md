@@ -4,11 +4,11 @@ A bundle to aid with the General Data Protection Regulation requirements.
 
 Features include:
 
-- Written for Symfony verison 3|4
+- Written for Symfony version 3|4
 - Provides annotation for adding to entity parameter doc blocks - this method is being deprecated.
 - Uses a PersonalData object and data transformers.
-- Records values for Data Protection Impact Assesments of entity parameters.
-- Uses SpecShaper\EncryptBundle to encrypt senstive data
+- Records values for Data Protection Impact Assessments of entity parameters.
+- Uses SpecShaper\EncryptBundle to encrypt sensitive data
 
 ## Version History
 
@@ -34,7 +34,7 @@ Version 2 Features:
 - [x] Create a storage entity
 - [x] Create twig templates for entity to handle displaying expired data.
 - [x] Create a migration command to create new database fields, and convert PersonalData attributes to PersonalData entity rows.
-- [ ] Create disposal classes and service
+- [x] Create disposal classes and service
 - [ ] Create a command to dispose of data
 - [ ] Implement a cron task to dispose of data
 - [ ] Generate activity report
@@ -44,7 +44,7 @@ Version 2 Features:
 
 **Warning**
 - This bundle has not been unit tested.
-- It has only been running on a Symfony2 v3.0.1 project, and not backward
+- It has only been running on a Symfony v3.4 project, and not backward
 compatibility tested.
 
 ## Documentation
@@ -60,7 +60,7 @@ This bundle is under the MIT license. See the complete license in the bundle:
 
 ## About
 
-GdprBundle has been written for the [SpecShaper](http://about.specshaper.com) and [Parolla](http://parolla.ie) websites
+GdprBundle has been written for [Parolla](https://www.parolla.ie) website
 to encode users private data.
 
 ## Reporting an issue or a feature request
