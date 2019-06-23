@@ -31,16 +31,19 @@ class DisposeEvent extends Event
      */
     protected $method;
 
+    protected $args;
+
     /**
      * DisposeEvent constructor.
      *
      * @param        $parameter The parameter to be disposed of.
      * @param string $method The disposal method
      */
-    public function __construct($parameter, $method = PersonalData::DISPOSE_BY_SET_NULL)
+    public function __construct($parameter, $method = PersonalData::DISPOSE_BY_SET_NULL, $args = [])
     {
         $this->parameter= $parameter;
         $this->method = $method;
+        $this->args = $args;
     }
 
     /**
@@ -87,6 +90,27 @@ class DisposeEvent extends Event
         return $this;
     }
 
+    /**
+     * @return array
+     */
+    public function getArgs(): array
+    {
+        return $this->args;
+    }
+
+    /**
+     * Set Args.
+     *
+     * @param array $args
+     *
+     * @return DisposeEvent
+     */
+    public function setArgs(array $args): DisposeEvent
+    {
+        $this->args = $args;
+
+        return $this;
+    }
 
 
 }

@@ -10,6 +10,7 @@ namespace SpecShaper\GdprBundle\Utils\Disposal;
 
 interface DisposalInterface
 {
+
     /**
      * @param $parameter The parameter to be disposed of.
      *

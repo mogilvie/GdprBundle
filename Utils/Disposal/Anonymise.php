@@ -19,9 +19,37 @@ use SpecShaper\GdprBundle\Utils\Disposal\DisposalInterface;
  */
 class Anonymise implements DisposalInterface
 {
- 
+
+    private $anonCharacter;
+
+    /**
+     * @param string $anonIPv4 A default anon IPv4
+     * @param string $anonIPv6 TA default anon  IPv6
+     */
+    public function __construct(array $arguments = [])
+    {
+        $this->anonCharacter =  '*';
+
+        if(!empty($arguments) && array_key_exists('replaceWith', $arguments)){
+            $this->anonCharacter = $arguments['replaceWith'];
+        }
+    }
+
     public function dispose($parameter){
-       return null;
+
+        if(empty($this->anonCharacter)){
+            return null;
+        }
+
+        if(strlen($this->anonCharacter) > 1){
+            return $this->anonCharacter;
+        }
+
+        $length = strlen($parameter);
+
+        $result = str_repeat($this->anonCharacter, $length);
+
+        return $result;
     }
  
 }

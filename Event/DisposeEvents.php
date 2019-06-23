@@ -10,4 +10,5 @@ namespace SpecShaper\GdprBundle\Event;
 final class DisposeEvents
 {
     const DISPOSE = 'dispose';
+    const DISPOSED = 'disposed';
 }
