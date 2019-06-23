@@ -23,7 +23,6 @@ class PersonalData
     /**
      * What to do with the data when it becomes expired.
      */
-    const DISPOSE_BY_DELETION = 'DELETE';
     const DISPOSE_BY_SET_NULL = 'SET_NULL';
     const DISPOSE_BY_AGGREGATE = 'AGGREGATE';
     const DISPOSE_BY_ANONYMISE = 'ANONYMISE';
