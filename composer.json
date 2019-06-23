@@ -26,7 +26,7 @@
         "twig/twig": "^2.0",
         "doctrine/orm": "^2.5",
         "doctrine/doctrine-bundle": "^1.6",
-        "specshaper/encrypt-bundle": "^1.1",
+        "specshaper/encrypt-bundle": "^1.1.1",
         "roromix/spreadsheetbundle": "^1.0"
     },
     "autoload": {
