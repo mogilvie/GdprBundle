@@ -6,7 +6,7 @@
  * Time: 22:55
  */
 
-namespace SpecShaper\GdpprBundle\tests\Unit\Disposal;
+namespace SpecShaper\GdprBundle\tests\Unit\Disposal;
 
 use SpecShaper\GdprBundle\Utils\Disposal\RegexReplace;
 
