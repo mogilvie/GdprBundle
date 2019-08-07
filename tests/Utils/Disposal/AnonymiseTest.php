@@ -6,7 +6,7 @@
  * Time: 22:55
  */
 
-namespace SpecShaper\GdprBundle\tests\Unit\Disposal;
+namespace SpecShaper\GdprBundle\tests\Utils\Disposal;
 
 use SpecShaper\GdprBundle\Utils\Disposal\Anonymise;
 
