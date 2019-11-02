@@ -16,6 +16,7 @@ use SpecShaper\GdprBundle\Types\PersonalDataType;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -25,6 +26,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  * match the entity filed annotations.
  *
  * terminal command = php bin/console gdpr:update
+ * or
+ * bin/console gdpr:update -t Parolla/SubscriptionBundle/Entity/Customer:billTo
  *
  * @author Mark Ogilvie <mark.ogilvie@ogilvieconsulting.net>
  */
@@ -46,6 +49,8 @@ class UpdateDataCommand extends Command
      * @var array An array of the personal_data column types from the entities.
      */
     private $personalDataFields = [];
+
+    private $numberOfColumns;
 
     /**
      * @var bool True if encryption has been disabled in the app config.
@@ -84,6 +89,11 @@ class UpdateDataCommand extends Command
         $this
             ->setName('gdpr:update')
             ->setDescription('Command to convert a database entry to a personal data object.')
+            ->addOption('tables',
+                't',
+                InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
+                'Select specific tables',
+                [])
         ;
     }
 
@@ -92,8 +102,10 @@ class UpdateDataCommand extends Command
 
         $this->comparator = new Comparator();
 
+        $optionalEntityClasses = $this->getCommandProperties($input);
+
         // Populate the array with the entities and fields that use the personal_data column type.
-        $this->getPersonalDataFields($output);
+        $this->setPersonalDataFields($optionalEntityClasses);
 
         // Create temporary data columns in each entity
         $this->createTempDataColumns($output);
@@ -113,6 +125,48 @@ class UpdateDataCommand extends Command
     }
 
     /**
+     * Get any entities and properties from the command in an array.
+     *
+     * @param Input $input
+     */
+    private function getCommandProperties(InputInterface $input){
+
+        // If command options are an empty array then return false.
+        if(empty($input->getOption('tables'))) {
+            return false;
+        }
+
+        $entityClasses = $input->getOption('tables');
+
+        // Create an array to return classes and properties.
+        $returnArray = [];
+
+        // For each class, identify and add any specific properties.
+        foreach($entityClasses as $entityClass){
+
+            // Split command entity into class and property
+            $classProperty = explode(':', $entityClass);
+
+            // Class name
+            $class = $classProperty[0];
+
+            // If no class key exists then crate one.
+            if(!array_key_exists($class, $entityClasses)){
+                $entityClasses[$class] = [];
+            }
+
+            // If no property was appended to the class then return false, alse append the property
+            if(!array_key_exists(1, $classProperty)){
+                $returnArray[$class] = false;
+            } else {
+                $returnArray[$class][] = $classProperty[1];
+            }
+        }
+
+        return $returnArray;
+    }
+
+    /**
      * Create Temp Data Columns.
      *
      * Clones the existing database, then modifies the schema of the clone to add personal data types.
@@ -127,18 +181,27 @@ class UpdateDataCommand extends Command
     private function createTempDataColumns( OutputInterface $output)
     {
 
-        $output->writeln('Creating temporary columns');
+        $classCount = 0;
+        $propertyCount = 0;
+        foreach($this->personalDataFields as $class => $properties){
+            $classCount++;
+            $propertyCount+= count($properties);
+        }
+
+        $this->numberOfColumns = $propertyCount;
+
+        $output->writeln(sprintf('Creating temporary columns for %s classes and %s properties',$classCount, $propertyCount));
 
         $schemaManager = $this->connection->getSchemaManager();
 
         // Get a copy of the schema before any temp columns area created.
         $fromSchema = $schemaManager->createSchema();
 
-        // Clone the schema to make altetions to.
+        // Clone the schema to make alterations to.
         $toSchema = clone $fromSchema;
 
         // Loop through all of the personal data fields in all entities.
-        foreach ($this->getPersonalDataFields() as $entityClass => $field) {
+        foreach ($this->personalDataFields as $entityClass => $field) {
 
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
@@ -166,14 +229,14 @@ class UpdateDataCommand extends Command
 
         $queries = $schemaDiff->toSql($platform); // queries to get from one to another schema.
 
-        // Execute the queres to modify the database.
+        // Execute the queries to modify the database.
         foreach ($queries as $query) {
             $this->connection->exec($query);
         }
     }
 
     /**
-     * Create PessonalData object in a temporary column.
+     * Create PersonalData object in a temporary column.
      *
      * Step through all the previously stored personal data columns.
      * If the original column data is already a personalData type then unserialize it and get the raw data.
@@ -186,17 +249,16 @@ class UpdateDataCommand extends Command
     private function createPersonalDataInTempColumn( OutputInterface $output)
     {
 
-        $numberOfColumns = count($this->getPersonalDataFields());
-        $output->writeln("Creating personal data objects in $numberOfColumns columns");
+        $output->writeln("Creating personal data objects in $this->numberOfColumns columns");
 
         // Get the query builder to load existing entity data.
         $queryBuilder = $this->connection->createQueryBuilder();
 
-        $progressBar = new ProgressBar($output, $numberOfColumns);
+        $progressBar = new ProgressBar($output, $this->numberOfColumns);
         $progressBar->start();
 
         // Loop through all of the personal data fields in all entities.
-        foreach ($this->getPersonalDataFields() as $entityClass => $field) {
+        foreach ($this->personalDataFields as $entityClass => $field) {
 
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
@@ -245,8 +307,9 @@ class UpdateDataCommand extends Command
                         array($propertyArray['identifier'] => $result[$propertyArray['identifier']])
                     );
                 }
+                $progressBar->advance();
             }
-            $progressBar->advance();
+
         }
 
         $progressBar->finish();
@@ -265,13 +328,12 @@ class UpdateDataCommand extends Command
         $output->writeln('Converting original columns to new personal data column type');
 
         // Alter the existing column to object data type and nullable.
-
         $schemaManager = $this->connection->getSchemaManager();
         $fromSchema = $schemaManager->createSchema();
 
         $toSchema = clone $fromSchema;
 
-        foreach ($this->getPersonalDataFields() as $entityClass => $field) {
+        foreach ($this->personalDataFields as $entityClass => $field) {
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
 
@@ -303,7 +365,6 @@ class UpdateDataCommand extends Command
         }
     }
 
-
     /**
      * Reload PersonalData
      *
@@ -319,11 +380,11 @@ class UpdateDataCommand extends Command
         // Get the query builder to load existing entity data.
         $queryBuilder = $this->connection->createQueryBuilder();
 
-        $progressBar = new ProgressBar($output, count($this->getPersonalDataFields()));
+        $progressBar = new ProgressBar($output, $this->numberOfColumns);
         $progressBar->start();
 
         // Loop through all of the personal data fields in all entities.
-        foreach ($this->getPersonalDataFields() as $entityClass => $field) {
+        foreach ($this->personalDataFields as $entityClass => $field) {
 
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
@@ -353,12 +414,12 @@ class UpdateDataCommand extends Command
                         array($propertyArray['identifier'] => $result[$propertyArray['identifier']])
                     );
                 }
+                $progressBar->advance();
             }
-            $progressBar->advance();
+
         }
         $progressBar->finish();
         $output->writeln(".");
-
     }
 
     /**
@@ -381,7 +442,7 @@ class UpdateDataCommand extends Command
         $toSchema = clone $fromSchema;
 
         // Loop through all of the personal data fields in all entities.
-        foreach ($this->getPersonalDataFields() as $entityClass => $field) {
+        foreach ($this->personalDataFields as $entityClass => $field) {
 
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
@@ -421,7 +482,7 @@ class UpdateDataCommand extends Command
      * @return array
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    private function getPersonalDataFields()
+    private function setPersonalDataFields($entityClasses = false)
     {
 
         $managedEntities = $this->em->getMetadataFactory()->getAllMetadata();
@@ -429,50 +490,77 @@ class UpdateDataCommand extends Command
         /** @var ClassMetadata $managedEntity */
         foreach ($managedEntities as $managedEntity) {
 
-            // Ignore mapped supersclass entities.
+            // Ignore mapped superclass entities.
             if (property_exists($managedEntity, 'isMappedSuperclass') && $managedEntity->isMappedSuperclass === true) {
                 continue;
             }
 
-            $entityClass = $managedEntity->getName();
+            $entityClass = str_replace('\\', '/', $managedEntity->getName());
 
-            $reflectionProperites = $managedEntity->getReflectionProperties();
+            // If specific entity classes have been provided with the command, and this isnt one of them, then continue;
+            if($entityClasses !== false
+                && !array_key_exists(str_replace('\\', '/', $entityClass), $entityClasses)){
+                continue;
+            }
+
+            $reflectionProperties = $managedEntity->getReflectionProperties();
+
+            $targetProperties = false;
+
+            if(!empty($entityClasses)){
+                $targetProperties = $entityClasses[$entityClass];
+            }
 
             /** @var \ReflectionProperty $refProperty */
-            foreach ($reflectionProperites as $refProperty) {
-
-                foreach ($this->reader->getPropertyAnnotations($refProperty) as $key => $annotation) {
-
-                    // Skip any anotation that is not a Column type.
-                    if (!$annotation instanceof Column) {
-                        continue;
-                    }
-
-                    // Ignore any column that is not of a personal_data type.
-                    if ($annotation->type !== PersonalDataType::NAME) {
-                        continue;
-                    }
-
-                    // @todo throw an error if foreign keys or primary keys are attached?
-
-                    // Get the table column name.
-                    $columnName = $managedEntity->getColumnName($refProperty->getName());
-
-                    // Store the field data information for later use.
-                    $this->personalDataFields[$entityClass][$refProperty->getName()] = [
-                        'tableName' => $managedEntity->getTableName(),
-                        'identifier' => $managedEntity->getSingleIdentifierColumnName(),
-                        'columnName' => $columnName,
-                        'tempColName' => $this->getTempColumnName($columnName),
-                        'refProperty' => $refProperty,
-                        'annotation' => $annotation,
-                    ];
-
-                }
+            foreach ($reflectionProperties as $refProperty) {
+                $this->getReferenceProperties($managedEntity, $refProperty, $targetProperties);
             }
         }
 
         return $this->personalDataFields;
+    }
+
+    private function getReferenceProperties(ClassMetadata $managedEntity, \ReflectionProperty $refProperty, $targetProperties){
+
+        // If specific entity classes have been provided with the command
+        if($targetProperties !== false){
+            // If the class has command has specific properties
+
+            if(!empty($targetProperties)){
+                // If this property isn't one of them, then continue
+                if(array_search($refProperty->getName(), $targetProperties) === false){
+                    return;
+                }
+            }
+        }
+
+        foreach ($this->reader->getPropertyAnnotations($refProperty) as $key => $annotation) {
+
+            // Skip any annotation that is not a Column type.
+            if (!$annotation instanceof Column) {
+                continue;
+            }
+
+            // Ignore any column that is not of a personal_data type.
+            if ($annotation->type !== PersonalDataType::NAME) {
+                continue;
+            }
+
+            // @todo throw an error if foreign keys or primary keys are attached?
+
+            // Get the table column name.
+            $columnName = $managedEntity->getColumnName($refProperty->getName());
+
+            // Store the field data information for later use.
+            $this->personalDataFields[$managedEntity->getName()][$refProperty->getName()] = [
+                'tableName' => $managedEntity->getTableName(),
+                'identifier' => $managedEntity->getSingleIdentifierColumnName(),
+                'columnName' => $columnName,
+                'tempColName' => $this->getTempColumnName($columnName),
+                'refProperty' => $refProperty,
+                'annotation' => $annotation,
+            ];
+        }
     }
 
     private function getTempColumnName($originalColumnName)

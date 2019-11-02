@@ -235,6 +235,16 @@ $bin/console gdpr:update
 
 The command will find all Column annotations of type personal_data and convert the stored value to a PersonalData object.
 
+Use the command option 'tables' to convert specific tables and fields.  
+You can enter a class, to search every property in the class. Or for specific class properties
+then append the property name. You can also append multiple classes.
+```
+$ bin/console gdpr:update -t AppBundle/Entity/BankDetails
+$ bin/console gdpr:update -t AppBundle/Entity/BankDetails:iban
+$ bin/console gdpr:update -t AppBundle/Entity/BankDetails -t AppBundle/Entity/User:firstName
+```
+
+
 ## Step 5: Use in forms
 
 Use the PersonalDataType in forms. Note that this is different from the doctrine PersonalDataType.
