@@ -18,7 +18,7 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder('spec_shaper_gdpr');
-
+//        $rootNode = $treeBuilder->getRootNode();
 //            $rootNode
 //                ->children()
 //                    ->booleanNode('encrypt_personal_data')->defaultValue(false)->end()
