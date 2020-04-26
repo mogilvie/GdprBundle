@@ -17,9 +17,7 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('spec_shaper_gdpr');
-
+        $treeBuilder = new TreeBuilder('spec_shaper_gdpr');
 
 //            $rootNode
 //                ->children()
