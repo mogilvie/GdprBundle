@@ -10,7 +10,7 @@ namespace SpecShaper\GdprBundle\Controller;
 
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -22,7 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * @Route("/portability")
  */
-class PortabilityController extends Controller
+class PortabilityController extends AbstractController
 {
     /**
      * Owner Action

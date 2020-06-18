@@ -8,13 +8,9 @@
 
 namespace SpecShaper\GdprBundle\Controller;
 
-use Roromix\Bundle\SpreadsheetBundle\Factory;
 use Symfony\Component\Routing\Annotation\Route;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use SpecShaper\GdprBundle\Utils\ReportService;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 /**
@@ -24,7 +20,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
  *
  * @Route("/reporting")
  */
-class ReportingController extends Controller
+class ReportingController extends AbstractController
 {
     /**
      * Coverage Action
@@ -54,10 +50,7 @@ class ReportingController extends Controller
     }
 
     /**
-     *
-     *
      * @Route("/{table}/{parameter}/details", name="reporting_details", methods={"GET"})
-
      */
     public function detailsAction($table, $parameter){
 
