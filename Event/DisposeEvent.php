@@ -4,7 +4,7 @@
 namespace SpecShaper\GdprBundle\Event;
 
 use SpecShaper\GdprBundle\Model\PersonalData;
-use Symfony\Component\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * Class DisposeEvent

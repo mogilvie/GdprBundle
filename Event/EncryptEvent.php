@@ -7,7 +7,7 @@
  */
 namespace SpecShaper\GdprBundle\Event;
 
-use Symfony\Component\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * EncryptEvent.
