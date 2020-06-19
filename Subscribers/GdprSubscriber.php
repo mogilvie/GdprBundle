@@ -309,7 +309,7 @@ class GdprSubscriber implements EventSubscriber
 
                 // Dispatch an event for the persisted value
                 $event = new AccessEvent($value);
-                $this->dispatcher->dispatch(AccessEvents::UPDATE, $event);
+                $this->dispatcher->dispatch($event, AccessEvents::UPDATE);
 
             } else {
                 $data = $this->decryptValue($value->getData());
@@ -317,7 +317,7 @@ class GdprSubscriber implements EventSubscriber
 
                 // Dispatch an event for the loaded value
                 $event = new AccessEvent($value);
-                $this->dispatcher->dispatch(AccessEvents::LOAD, $event);
+                $this->dispatcher->dispatch($event, AccessEvents::LOAD);
             }
 
             // Set the PersonalData object back to the entity.
