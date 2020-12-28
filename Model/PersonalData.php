@@ -581,7 +581,8 @@ class PersonalData
      */
     public function getReturnFormat()
     {
-        return $this->returnFormat;
+        //return $this->returnFormat;
+        return null;
     }
 
     /**
@@ -593,7 +594,7 @@ class PersonalData
      */
     public function setReturnFormat($returnFormat)
     {
-        $this->returnFormat = $returnFormat;
+        //$this->returnFormat = $returnFormat;
 
         return $this;
     }
