@@ -555,9 +555,9 @@ class PersonalData
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
-    public function getKeepUntil(): \DateTimeInterface
+    public function getKeepUntil(): ?\DateTimeInterface
     {
         return $this->keepUntil;
     }
@@ -565,11 +565,11 @@ class PersonalData
     /**
      * Set KeepUntil.
      *
-     * @param \DateTimeInterface $keepUntil
+     * @param \DateTimeInterface|null $keepUntil
      *
      * @return PersonalData
      */
-    public function setKeepUntil(\DateTimeInterface $keepUntil): PersonalData
+    public function setKeepUntil(?\DateTimeInterface $keepUntil): PersonalData
     {
         $this->keepUntil = $keepUntil;
 
