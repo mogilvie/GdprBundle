@@ -321,7 +321,7 @@ class PersonalData
                 $string = $this->getData()->format('d M Y h:m');
                 break;
             case PersonalData::FORMAT_CURRENCY:
-                $f = new NumberFormatter("en", NumberFormatter::CURRENCY);
+                $f = NumberFormatter::create("en", NumberFormatter::CURRENCY);
                 $string = $f->formatCurrency($this->getData(), "EUR");
                 break;
             default:
@@ -345,7 +345,7 @@ class PersonalData
     /**
      * @return bool
      */
-    public function isExpired(): ?bool
+    public function isExpired(): bool
     {
         return $this->isExpired;
     }
@@ -365,9 +365,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getIdMethod(): string
+    public function getIdMethod(): ?string
     {
         return $this->idMethod;
     }
@@ -428,9 +428,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getBasisOfCollection(): string
+    public function getBasisOfCollection(): ?string
     {
         return $this->basisOfCollection;
     }
@@ -464,9 +464,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getProvidedBy(): string
+    public function getProvidedBy(): ?string
     {
         return $this->providedBy;
     }
@@ -486,9 +486,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getPurposeFor(): string
+    public function getPurposeFor(): ?string
     {
         return $this->purposeFor;
     }
@@ -533,9 +533,9 @@ class PersonalData
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDisposeBy(): string
+    public function getDisposeBy(): ?string
     {
         return $this->disposeBy;
     }
@@ -622,9 +622,9 @@ class PersonalData
     }
 
     /**
-     * @return array
+     * @return array|null
      */
-    public function getMethodOfReceipt(): array
+    public function getMethodOfReceipt(): ?array
     {
         return $this->methodOfReceipt;
     }
@@ -644,9 +644,9 @@ class PersonalData
     }
 
     /**
-     * @return array
+     * @return array|null
      */
-    public function getReceiptProtection(): array
+    public function getReceiptProtection(): ?array
     {
         return $this->receiptProtection;
     }
@@ -666,9 +666,9 @@ class PersonalData
     }
 
     /**
-     * @return array
+     * @return array|null
      */
-    public function getMethodOfReturn(): array
+    public function getMethodOfReturn(): ?array
     {
         return $this->methodOfReturn;
     }
@@ -688,9 +688,9 @@ class PersonalData
     }
 
     /**
-     * @return array
+     * @return array|null
      */
-    public function getReturnProtection(): array
+    public function getReturnProtection(): ?array
     {
         return $this->returnProtection;
     }
@@ -734,7 +734,7 @@ class PersonalData
     /**
      * @return int
      */
-    public function getLength(): int
+    public function getLength(): ?int
     {
         return $this->length;
     }
@@ -798,9 +798,9 @@ class PersonalData
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
-    public function getUpdatedOn(): \DateTimeInterface
+    public function getUpdatedOn(): ?\DateTimeInterface
     {
         return $this->updatedOn;
     }
