@@ -187,20 +187,31 @@ class GdprSubscriber implements EventSubscriber
      * decrypted information available once more.
      * @param PostFlushEventArgs $args
      */
+    /**
+     * After we have persisted the entities, we want to have the
+     * decrypted information available once more.
+     * @param PostFlushEventArgs $args
+     */
     public function postFlush(PostFlushEventArgs $args)
     {
         $unitOfWork = $args->getEntityManager()->getUnitOfWork();
-
+        
         foreach ($this->postFlushDecryptQueue as $pair) {
             $fieldPairs = $pair['fields'];
             $entity = $pair['entity'];
             $oid = spl_object_hash($entity);
-
+            
             foreach ($fieldPairs as $fieldPair) {
                 /** @var \ReflectionProperty $field */
                 $field = $fieldPair['field'];
 
                 $field->setValue($entity, $fieldPair['value']);
+
+                if($fieldPair['value'] instanceof PersonalData){
+                    $decrypted = $this->decryptValue($fieldPair['value']->getData());
+                    $fieldPair['value']->setData($decrypted);
+                }
+
                 $unitOfWork->setOriginalEntityProperty($oid, $field->getName(), $fieldPair['value']);
             }
 
