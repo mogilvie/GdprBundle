@@ -1,7 +1,7 @@
 {
     "name": "specshaper/gdpr-bundle",
     "type": "symfony-bundle",
-    "description": "A Symfony 3|4 bundle for classifying entity parameters according to GDPR requirements and encrypting data",
+    "description": "A Symfony 3|4|5 bundle for classifying entity parameters according to GDPR requirements and encrypting data",
     "homepage": "https://github.com/mogilvie/GdprBundle",
     "authors": [
         {
