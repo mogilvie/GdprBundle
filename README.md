@@ -44,8 +44,6 @@ Version 2 Features:
 
 **Warning**
 - This bundle has not been unit tested.
-- It has only been running on a Symfony v3.4 project, and not backward
-compatibility tested.
 
 ## Documentation
 
