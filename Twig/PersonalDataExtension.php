@@ -46,6 +46,11 @@ class PersonalDataExtension extends \Twig_Extension
         if(empty($personalData)){
             return null;
         }
+        
+        // If value is not a personal data object then return it.
+        if(!$personalData instanceof PersonalData){
+            return $personalData;
+        }
 
         // If the data is expired then return the expired value
         if($personalData->isExpired()){
