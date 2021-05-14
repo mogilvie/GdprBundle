@@ -17,16 +17,16 @@
     ],
     "require": {
         "php": ">=7.1",
-        "symfony/console": "^3.2 || ^4.0 || ^5.0",
-        "symfony/form": "^3.2 || ^4.0 || ^5.0",
-        "symfony/framework-bundle": "^3.2 || ^4.0 || ^5.0",
-        "symfony/validator": "^3.2 || ^4.0 || ^5.0" ,
-        "symfony/twig-bundle": "^3.2 || ^4.0 || ^5.0",
-        "symfony/security-bundle": "^3.2 || ^4.0 || ^5.0",
+        "symfony/console": "^3.2 || ^4.0 || ^5",
+        "symfony/form": "^3.2 || ^4.0 || ^5",
+        "symfony/framework-bundle": "^3.2 || ^4.0 || ^5",
+        "symfony/validator": "^3.2 || ^4.0 || ^5" ,
+        "symfony/twig-bundle": "^3.2 || ^4.0 || ^5",
+        "symfony/security-bundle": "^3.2 || ^4.0 || ^5",
         "twig/twig": "^2.0",
         "symfony/orm-pack": "*",
-        "specshaper/encrypt-bundle": "dev-master || ^1.1 || ^2.0",
-        "roromix/spreadsheetbundle": "^1.0"
+        "specshaper/encrypt-bundle": "dev-master || ^1.1 || ^2",
+        "roromix/spreadsheetbundle": "^1"
     },
     "autoload": {
         "psr-4": {
