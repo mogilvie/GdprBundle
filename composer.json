@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": ">=7.1",
-        "symfony/console": "^3.2 || ^4.0 || ^5",
+        "symfony/console": "^3.2 || ^4 || ^5",
         "symfony/form": "^3.2 || ^4.0 || ^5",
         "symfony/framework-bundle": "^3.2 || ^4.0 || ^5",
         "symfony/validator": "^3.2 || ^4.0 || ^5" ,
