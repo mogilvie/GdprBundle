@@ -25,7 +25,7 @@
         "symfony/security-bundle": "^3.2 || ^4.0 || ^5.0",
         "twig/twig": "^2.0",
         "symfony/orm-pack": "*",
-        "specshaper/encrypt-bundle": "dev-master",
+        "specshaper/encrypt-bundle": "dev-master || ^1.1 || ^ 2.0",
         "roromix/spreadsheetbundle": "dev-master"
     },
     "autoload": {
