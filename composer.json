@@ -26,7 +26,7 @@
         "twig/twig": "^2.0",
         "symfony/orm-pack": "*",
         "specshaper/encrypt-bundle": "dev-master || ^1.1 || ^2.0",
-        "roromix/spreadsheetbundle": "dev-master"
+        "roromix/spreadsheetbundle": "^1.0"
     },
     "autoload": {
         "psr-4": {
