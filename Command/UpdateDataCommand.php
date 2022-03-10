@@ -97,7 +97,7 @@ class UpdateDataCommand extends Command
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
 
         $this->comparator = new Comparator();
@@ -128,8 +128,10 @@ class UpdateDataCommand extends Command
      * Get any entities and properties from the command in an array.
      *
      * @param Input $input
+     * @return array|bool
      */
-    private function getCommandProperties(InputInterface $input){
+    private function getCommandProperties(InputInterface $input): array|bool
+    {
 
         // If command options are an empty array then return false.
         if(empty($input->getOption('tables'))) {
