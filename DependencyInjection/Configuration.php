@@ -15,7 +15,7 @@ class Configuration implements ConfigurationInterface
     /**
      * {@inheritdoc}
      */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
 
         $treeBuilder = new TreeBuilder('spec_shaper_gdpr');
@@ -26,14 +26,6 @@ class Configuration implements ConfigurationInterface
             // for symfony/config 4.1 and older
             $rootNode = $treeBuilder->root('spec_shaper_gdpr');
         }
-
-
-//            $rootNode
-//                ->children()
-//                    ->booleanNode('encrypt_personal_data')->defaultValue(false)->end()
-//                    ->booleandNode('encrypt_special_data')->defaultValue(false)->end()
-//                ->end()
-//            ;
 
         return $treeBuilder;
     }
