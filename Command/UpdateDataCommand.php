@@ -121,7 +121,8 @@ class UpdateDataCommand extends Command
 
         // Drop the temp columns
         $this->dropTempColumns($output);
-
+        
+        return Command::SUCCESS;
     }
 
     /**
