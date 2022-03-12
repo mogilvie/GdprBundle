@@ -1,10 +1,5 @@
 <?php
 
-/**
- * SpecShaper\GdprBundle\Event\EncryptEvent.php.
- *
- * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- */
 namespace SpecShaper\GdprBundle\Event;
 
 use Symfony\Contracts\EventDispatcher\Event;
@@ -16,65 +11,39 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class AccessEvent extends Event
 {
-
+    /**
+     * The string to be encrypted or decrypted.
+     */
+    protected string $value;
 
     /**
-     * The string / object to be encrypted or decrypted
-     *
-     * @since Available since Release 1.0.0
-     *
-     * @var string
+     * Decrypt or encrypt actions.
      */
-    protected $value;
+    protected string $action;
 
-    /**
-     * @var string
-     */
-    protected $action;
-
-    /**
-     * EncryptEvent constructor.
-     *
-     * @param        $value
-     * @param string $action
-     */
-    public function __construct($value, $action = EncryptEvents::ENCRYPT)
+    public function __construct(string $value, ?string $action = EncryptEvents::ENCRYPT)
     {
-        $this->value= $value;
+        $this->value = $value;
         $this->action = $action;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
         return $this->value;
     }
 
-    /**
-     * @param string $value
-     */
     public function setValue(string $value)
     {
         $this->value = $value;
     }
 
-    /**
-     * @return string
-     */
     public function getAction(): string
     {
         return $this->action;
     }
 
-    /**
-     * @param string $action
-     */
     public function setAction(string $action)
     {
         $this->action = $action;
     }
-
-
 }

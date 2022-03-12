@@ -11,8 +11,7 @@ namespace SpecShaper\GdprBundle\Utils\Portability;
  */
 class ExcelExportService implements ExportServiceInterface
 {
-    
-    public function export(){
-    
+    public function export()
+    {
     }
 }

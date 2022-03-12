@@ -1,10 +1,5 @@
 <?php
 
-/**
- * SpecShaper\GdprBundle\Event\EncryptEvents.php.
- *
- * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- */
 namespace SpecShaper\GdprBundle\Event;
 
 /**
@@ -14,7 +9,7 @@ namespace SpecShaper\GdprBundle\Event;
  */
 final class AccessEvents
 {
-    const LOAD = 'gdpr.personal_data.load';
-    const UPDATE = 'gdpr.personal_data.update';
-    const DELETE = 'gdpr.personal_data.delete';
+    public const LOAD = 'gdpr.personal_data.load';
+    public const UPDATE = 'gdpr.personal_data.update';
+    public const DELETE = 'gdpr.personal_data.delete';
 }

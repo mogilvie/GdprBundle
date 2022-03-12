@@ -4,8 +4,8 @@ namespace SpecShaper\GdprBundle\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\ConversionException;
-use SpecShaper\GdprBundle\Model\PersonalData;
 use Doctrine\DBAL\Types\Type;
+use SpecShaper\GdprBundle\Model\PersonalData;
 
 /**
  * Personal Data Object.
@@ -14,20 +14,14 @@ use Doctrine\DBAL\Types\Type;
  */
 final class PersonalDataType extends Type
 {
-    const NAME = 'personal_data';
+    public const NAME = 'personal_data';
 
-    /**
-     * @param array            $fieldDeclaration
-     * @param AbstractPlatform $platform
-     *
-     * @return string
-     */
-    public function getSqlDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
+    public function getSqlDeclaration(array $column, AbstractPlatform $platform): string
     {
-        return $platform->getClobTypeDeclarationSQL($fieldDeclaration);
+        return $platform->getClobTypeDeclarationSQL($column);
     }
 
-    public function convertToPHPValue($value, AbstractPlatform $platform)
+    public function convertToPHPValue($value, AbstractPlatform $platform): mixed
     {
         // This is executed when the value is read from the database. Make your conversions here, optionally using the $platform.
         if (null === $value) {
@@ -36,20 +30,16 @@ final class PersonalDataType extends Type
 
         $value = (is_resource($value)) ? stream_get_contents($value) : $value;
 
-        $personalData = unserialize($value);
-
-        return $personalData;
+        return unserialize($value);
     }
 
     /**
-     * @param PersonalData            $value
-     * @param AbstractPlatform $platform
-     * @return mixed|null|string
+     * @param PersonalData $value
+     *
      * @throws ConversionException
      */
-    public function convertToDatabaseValue($value, AbstractPlatform $platform)
+    public function convertToDatabaseValue($value, AbstractPlatform $platform): ?string
     {
-
         if (empty($value)) {
             return null;
         }
@@ -59,23 +49,14 @@ final class PersonalDataType extends Type
         }
 
         throw ConversionException::conversionFailed($value, self::NAME);
-
     }
 
-    /**
-     * @param AbstractPlatform $platform
-     *
-     * @return bool
-     */
-    public function requiresSQLCommentHint(AbstractPlatform $platform)
+    public function requiresSQLCommentHint(AbstractPlatform $platform): bool
     {
         return true;
     }
 
-    /**
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return self::NAME;
     }

@@ -12,7 +12,6 @@ use SpecShaper\GdprBundle\Utils\Disposal\SetNull;
 
 class Disposer
 {
-
     public function disposeByPersonalData(PersonalData $personalData)
     {
         $disposedData = $this->dispose(
@@ -28,9 +27,8 @@ class Disposer
 
     public function dispose($data, $method, $args)
     {
-
-        /** @var DisposalInterface $disposer */
-        switch($method){
+        /* @var DisposalInterface $disposer */
+        switch ($method) {
             case PersonalData::DISPOSE_BY_ANONYMISE_DATE:
                 $disposer = new AnonymiseDate($args);
                 break;
@@ -47,8 +45,6 @@ class Disposer
                 $disposer = new SetNull();
         }
 
-        $anonValue = $disposer->dispose($data);
-
-        return $anonValue;
+        return $disposer->dispose($data);
     }
 }

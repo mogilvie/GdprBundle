@@ -2,20 +2,19 @@
 
 namespace SpecShaper\GdprBundle\Utils\Disposal;
 
-use SpecShaper\GdprBundle\Utils\Disposal\DisposalInterface;
-
 /**
- * Aggregate
+ * Aggregate.
  *
  * Aggregate a value to a range.
+ *
+ * @TODO Complete code.
  *
  * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
  */
 class Aggregate implements DisposalInterface
 {
- 
-    public function dispose($parameter){
-       return null;
+    public function dispose(mixed $parameter): mixed
+    {
+        return null;
     }
- 
 }

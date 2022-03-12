@@ -1,7 +1,7 @@
 {
     "name": "specshaper/gdpr-bundle",
     "type": "symfony-bundle",
-    "description": "A Symfony 3|4|5 bundle for classifying entity parameters according to GDPR requirements and encrypting data",
+    "description": "A Symfony 5|6 bundle for classifying entity parameters according to GDPR requirements and encrypting data",
     "homepage": "https://github.com/mogilvie/GdprBundle",
     "authors": [
         {
@@ -16,16 +16,16 @@
         "MIT"
     ],
     "require": {
-        "php": ">=7.1",
-        "symfony/console": "^3.2 || ^4 || ^5",
-        "symfony/form": "^3.2 || ^4 || ^5",
-        "symfony/framework-bundle": "^3.2 || ^4 || ^5",
-        "symfony/validator": "^3.2 || ^4 || ^5" ,
-        "symfony/twig-bundle": "^3.2 || ^4 || ^5",
-        "symfony/security-bundle": "^3.2 || ^4 || ^5",
-        "twig/twig": "^2.0",
+        "php": ">=8.0",
+        "symfony/console": "^5.4|^6.0",
+        "symfony/form": "^5.4|^6.0",
+        "symfony/framework-bundle": "^5.4|^6.0",
+        "symfony/validator": "^5.4|^6.0",
+        "symfony/twig-bundle": "^5.4|^6.0",
+        "symfony/security-bundle": "^5.4|^6.0",
+        "twig/twig": "^3.0",
         "symfony/orm-pack": "*",
-        "specshaper/encrypt-bundle": "dev-master || ^1.1 || ^2",
+        "specshaper/encrypt-bundle": "^3.0",
         "roromix/spreadsheetbundle": "^1.0"
     },
     "autoload": {

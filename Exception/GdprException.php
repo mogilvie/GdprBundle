@@ -1,8 +1,5 @@
 <?php
 
-/**
- * @author     Written by Mark Ogilvie <mark.ogilvie@specshaper.com>, 11 2015
- */
 namespace SpecShaper\GdprBundle\Exception;
 
 /**
@@ -15,7 +12,7 @@ class GdprException extends \Exception
     /**
      * The value trying to be encrypted.
      */
-    private $value;
+    private ?string $value;
 
     /**
      * Constructor.
@@ -27,24 +24,20 @@ class GdprException extends \Exception
      *
      * @param string $message Optional message
      */
-    public function __construct($message = null, $value = null)
+    public function __construct(?string $message, ?string $value)
     {
-        if ($message === null) {
+        if (null === $message) {
             $message = 'ssg.exception.gdprException';
         }
 
-        if ($value !== null) {
-            $this->value = $value;
-        }
 
+        $this->value = $value;
 
         parent::__construct($message);
     }
 
-    /**
-     * @return mixed
-     */
-    public function getValue()
+
+    public function getValue(): ?string
     {
         return $this->value;
     }
@@ -52,16 +45,14 @@ class GdprException extends \Exception
     /**
      * Set Value.
      *
-     * @param mixed $value
+     * @param ?string $value
      *
      * @return GdprException
      */
-    public function setValue($value)
+    public function setValue(?string $value)
     {
         $this->value = $value;
 
         return $this;
     }
-
-
 }

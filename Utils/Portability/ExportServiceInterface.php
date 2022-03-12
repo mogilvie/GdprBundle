@@ -1,9 +1,5 @@
 <?php
-/**
- * SpecShaper/GdprBundle/Utils/Portability/ExportServiceInterface.php.
- *
- * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- */
+
 namespace SpecShaper\GdprBundle\Utils\Portability;
 
 /**

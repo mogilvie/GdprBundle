@@ -2,7 +2,8 @@
 
 namespace SpecShaper\GdprBundle\Command;
 
-use Doctrine\Common\Annotations\AnnotationReader;
+
+use Doctrine\Common\Annotations\Reader;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Types\Type;
@@ -12,14 +13,13 @@ use Doctrine\ORM\Mapping\Column;
 use SpecShaper\GdprBundle\Model\PersonalData;
 use SpecShaper\GdprBundle\Types\PersonalDataType;
 use SpecShaper\GdprBundle\Utils\Disposer;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Serializer\Serializer;
 
 /**
- * Dispose Command
+ * Dispose Command.
  *
  * A command to visit each PersonalData field in every database table and dispose of any data which has expired.
  *
@@ -27,25 +27,28 @@ use Symfony\Component\Serializer\Serializer;
  *
  * @author Mark Ogilvie <mark.ogilvie@ogilvieconsulting.net>
  */
-class DisposeCommand extends ContainerAwareCommand
+class DisposeCommand extends Command
 {
-    /** @var EntityManagerInterface */
-    private $em;
+    private EntityManagerInterface $em;
 
-    /** @var AnnotationReader */
-    private $reader;
+    private Reader $reader;
 
-    /** @var Connection */
-    private $connection;
+    private Connection $connection;
 
-    /** @var array  */
-    private $personalDataFields = [];
+    private array $personalDataFields = [];
 
     /** @var Comparator */
-    private $comparator;
+    private ?Comparator $comparator = null;
 
     /** @var Disposer */
-    private $disposer;
+    private ?Disposer $disposer = null;
+
+    public function __construct(EntityManagerInterface $em, Reader $reader, Connection $connection)
+    {
+        $this->em = $em;
+        $this->reader = $reader;
+        $this->connection = $connection;
+    }
 
     protected function configure()
     {
@@ -55,11 +58,8 @@ class DisposeCommand extends ContainerAwareCommand
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->em = $this->getContainer()->get('doctrine')->getManager();
-        $this->reader = $this->getContainer()->get('annotation_reader');
-        $this->connection = $this->getContainer()->get('doctrine.dbal.default_connection');
         $this->comparator = new Comparator();
         $this->disposer = new Disposer();
 
@@ -69,6 +69,7 @@ class DisposeCommand extends ContainerAwareCommand
         // Filter the personal_data fields for those that have expired
         $this->replacePersonalData($output);
 
+        return Command::SUCCESS;
     }
 
     /**
@@ -77,38 +78,33 @@ class DisposeCommand extends ContainerAwareCommand
      * Visit every entity and identify fields that contain a personal_data annotation.
      * Store the field to an array for processing.
      *
-     * @return array
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    private function getPersonalDataFields()
+    private function getPersonalDataFields(): array
     {
-
         $managedEntities = $this->em->getMetadataFactory()->getAllMetadata();
 
         /** @var ClassMetadata $managedEntity */
         foreach ($managedEntities as $managedEntity) {
-
             // Ignore mapped superclass entities.
-            if (property_exists($managedEntity, 'isMappedSuperclass') && $managedEntity->isMappedSuperclass === true) {
+            if (property_exists($managedEntity, 'isMappedSuperclass') && true === $managedEntity->isMappedSuperclass) {
                 continue;
             }
 
             $entityClass = $managedEntity->getName();
 
-            $reflectionProperites = $managedEntity->getReflectionProperties();
+            $reflectionProperties = $managedEntity->getReflectionProperties();
 
             /** @var \ReflectionProperty $refProperty */
-            foreach ($reflectionProperites as $refProperty) {
-
+            foreach ($reflectionProperties as $refProperty) {
                 foreach ($this->reader->getPropertyAnnotations($refProperty) as $key => $annotation) {
-
                     // Skip any anotation that is not a Column type.
                     if (!$annotation instanceof Column) {
                         continue;
                     }
 
                     // Ignore any column that is not of a personal_data type.
-                    if ($annotation->type !== PersonalDataType::NAME) {
+                    if (PersonalDataType::NAME !== $annotation->type) {
                         continue;
                     }
 
@@ -136,11 +132,11 @@ class DisposeCommand extends ContainerAwareCommand
      * Replace personal data with annonymised data if the retention period has been passed.
      *
      * @todo Work in progress
-     * @param OutputInterface $output
+     *
      * @throws \Doctrine\DBAL\DBALException
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    private function replacePersonalData( OutputInterface $output)
+    private function replacePersonalData(OutputInterface $output): void
     {
         $output->writeln('Reload personal data to original columns');
 
@@ -154,31 +150,26 @@ class DisposeCommand extends ContainerAwareCommand
 
         // Loop through all of the personal data fields in all entities.
         foreach ($this->getPersonalDataFields() as $entityClass => $field) {
-
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
 
             // Loop through each personal_data field in the entity.
             foreach ($field as $propertyArray) {
-
                 // Get all data for the current entity and field.
                 $queryBuilder
-                    ->select('t.'. $propertyArray['identifier'] .', t.'.$propertyArray['columnName'].' AS personalData')
+                    ->select('t.'.$propertyArray['identifier'].', t.'.$propertyArray['columnName'].' AS personalData')
                     ->from($propertyArray['tableName'], 't');
 
                 $results = $queryBuilder->execute();
 
                 // For each selected entity field create a personal data object and save it to the temporary field.
                 foreach ($results as $result) {
-
                     // Get the copied personal_data from the query.
                     /** @var PersonalData $personalData */
                     $personalData = unserialize($result['personalData']);
 
-                    if($personalData instanceof PersonalData) {
-
+                    if ($personalData instanceof PersonalData) {
                         if ($personalData->getCreatedOn() instanceof \DateTime) {
-
                             // Get the date that the personal data was created and clone it.
                             $keepUntil = clone $personalData->getCreatedOn();
 
@@ -192,10 +183,10 @@ class DisposeCommand extends ContainerAwareCommand
                                 // Update the database with the disposed data.
                                 $this->connection->update(
                                     $tableName,
-                                    array(
-                                        $propertyArray['columnName'] => $personalData
-                                    ),
-                                    array($propertyArray['identifier'] => $result[$propertyArray['identifier']])
+                                    [
+                                        $propertyArray['columnName'] => $personalData,
+                                    ],
+                                    [$propertyArray['identifier'] => $result[$propertyArray['identifier']]]
                                 );
                             }
                             unset($keepUntil);
@@ -206,6 +197,6 @@ class DisposeCommand extends ContainerAwareCommand
             $progressBar->advance();
         }
         $progressBar->finish();
-        $output->writeln(".");
+        $output->writeln('.');
     }
 }

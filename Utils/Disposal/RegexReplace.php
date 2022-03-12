@@ -9,51 +9,37 @@ namespace SpecShaper\GdprBundle\Utils\Disposal;
  */
 class RegexReplace implements DisposalInterface
 {
+    private string $regexPattern;
+    private string $replaceWith;
 
-    private $regexPattern;
-    private $replaceWith;
-
-    /**
-     * RegexReplace constructor.
-     *
-     * @param string $regexPattern PHP Regex String /
-     * @param string $replaceWith
-     */
     public function __construct(array $args)
     {
-
         $this->regexPattern = $args['pattern'];
-        $this->replaceWith = "*";
+        $this->replaceWith = '*';
 
-        if(array_key_exists('replaceWith', $args)){
+        if (array_key_exists('replaceWith', $args)) {
             $this->replaceWith = $args['replaceWith'];
         }
-
     }
 
-    /**
-     * @param string $parameter
-     * @return mixed|null|string
-     */
-    public function dispose($parameter){
-
-        if(strlen($this->replaceWith) > 1){
+    public function dispose(mixed $parameter): mixed
+    {
+        if (strlen($this->replaceWith) > 1) {
             $replaceFunction = function ($matches) {
                 return $this->replaceWith;
             };
         } else {
             $replaceFunction = function ($matches) {
                 $length = strlen($matches[0]);
+
                 return str_repeat($this->replaceWith, $length);
             };
         }
 
-        $result = preg_replace_callback(
+        return preg_replace_callback(
             $this->regexPattern,
             $replaceFunction,
             $parameter
         );
-
-        return $result;
     }
 }

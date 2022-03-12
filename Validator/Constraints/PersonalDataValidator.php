@@ -2,11 +2,11 @@
 
 namespace SpecShaper\GdprBundle\Validator\Constraints;
 
+use SpecShaper\GdprBundle\Model\PersonalData as PersonalDataObject;
+use SpecShaper\GdprBundle\Validator\Constraints\PersonalData as PersonalDataConstraint;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
-use SpecShaper\GdprBundle\Validator\Constraints\PersonalData as PersonalDataConstraint;
-use SpecShaper\GdprBundle\Model\PersonalData as PersonalDataObject;
 
 /**
  * @author Mark Ogilvie <mark.ogilvie@ogilvieconsulting.net>
@@ -27,7 +27,7 @@ class PersonalDataValidator extends ConstraintValidator
         }
 
         if ($value instanceof PersonalDataObject) {
-            //throw new UnexpectedTypeException($value, PersonalDataObject::class);
+            // throw new UnexpectedTypeException($value, PersonalDataObject::class);
             $value = $value->getData();
         }
 
@@ -37,6 +37,5 @@ class PersonalDataValidator extends ConstraintValidator
 
         // Validate the object against each of the constraints.
         $validator->validate($value, $constraint->constraints);
-
     }
 }

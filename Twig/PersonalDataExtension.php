@@ -4,56 +4,55 @@ namespace SpecShaper\GdprBundle\Twig;
 
 use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
 use SpecShaper\GdprBundle\Model\PersonalData;
-use SpecShaper\GdprBundle\Types\PersonalDataType;
+use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
+use Twig\TwigFunction;
 
-class PersonalDataExtension extends \Twig_Extension
+class PersonalDataExtension extends AbstractExtension
 {
+    public const TYPE_CURRENCY = 'currency';
+    public const TYPE_DATE = 'date';
+    public const TYPE_DATE_TIME = 'date_time';
+    public const TYPE_DECIMAL = 'decimal';
+    public const TYPE_FLOAT = 'float';
+    public const TYPE_INTEGER = 'integer';
+    public const TYPE_STRING = 'string';
+    public const TYPE_TEXT = 'text';
+    public const TYPE_BOOLEAN = 'boolean';
 
-    const TYPE_CURRENCY = 'currency';
-    const TYPE_DATE = 'date';
-    const TYPE_DATE_TIME = 'date_time';
-    const TYPE_DECIMAL = 'decimal';
-    const TYPE_FLOAT = 'float';
-    const TYPE_INTEGER = 'integer';
-    const TYPE_STRING = 'string';
-    const TYPE_TEXT = 'text';
-    const TYPE_BOOLEAN = 'boolean';
-
-    /**
-     * @var EncryptorInterface
-     */
-    private $encryptor;
+    private EncryptorInterface $encryptor;
 
     public function __construct(EncryptorInterface $encryptor)
     {
         $this->encryptor = $encryptor;
     }
 
-    public function getFilters()
+    public function getFilters(): array
     {
-        return array(
-            new \Twig_SimpleFilter('personal_data', array($this, 'convertPersonalData'))
-        );
+        return [
+            new TwigFilter('personal_data', [$this, 'convertPersonalData']),
+        ];
     }
 
     /**
      * @param PersonalData $personalData
+     *
      * @return string
      */
-    public function convertPersonalData($personalData, $type = null, $options = [])
+    public function convertPersonalData(mixed $personalData, ?string $type = null, ?array $options = []): ?string
     {
         // If the data is empty then return empty.
-        if(empty($personalData)){
+        if (empty($personalData)) {
             return null;
         }
-        
-        // If value is not a personal data object then return it.
-        if(!$personalData instanceof PersonalData){
-            return $personalData;
-        }
+
+//        // If value is not a personal data object then return it.
+//        if (!$personalData instanceof PersonalData) {
+//            return $personalData;
+//        }
 
         // If the data is expired then return the expired value
-        if($personalData->isExpired()){
+        if ($personalData->isExpired()) {
             return $personalData->getData();
         }
 
@@ -64,7 +63,7 @@ class PersonalDataExtension extends \Twig_Extension
         $displayValue = $this->encryptor->decrypt($displayValue);
 
         // Format the number according to the data type and twig variable display options.
-        switch($type){
+        switch ($type) {
             case self::TYPE_CURRENCY:
                 break;
             case self::TYPE_DATE:
@@ -85,12 +84,10 @@ class PersonalDataExtension extends \Twig_Extension
             break;
         }
 
-
-
-        return  $displayValue;
+        return $displayValue;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'spec_shaper_gdpr_personal_data_extension';
     }

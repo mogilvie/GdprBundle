@@ -115,7 +115,7 @@ class AppKernel extends Kernel
 Add an empty value for `encrypt_key` to your parameters file.
 
 ```yaml
-# app/config/parameters.yml
+# app/config/parameters.yaml
 
     # ...
     encrypt_key: ~
@@ -130,7 +130,7 @@ $ bin/console encrypt:genkey
 Now, replace your encryption key.
 
 ```yaml
-# app/config/parameters.yml
+# app/config/parameters.yaml
 
     # ...
     encrypt_key: <your_key_here>
@@ -140,7 +140,7 @@ Now, replace your encryption key.
 Configure the EncryptBundle.
 
 ```yaml
-# app/config/config.yml
+# app/config/config.yaml
 
     # ...
     spec_shaper_encrypt:
@@ -149,21 +149,21 @@ Configure the EncryptBundle.
 ```   
 You can disable encryption of the database by setting deleting is_disabled or setting it true.
 
-Configure the routing to access the reports:  
+Configure the routing to access the reports in dev environment only:  
 ```yaml
-# app/config/routing.yml
+# app/config/routes/dev/spec_shaper_gdpr.yaml
 
    # ...
-    spec_shaper_gdpr:
-        resource: "@SpecShaperGdprBundle/Controller/"
-        type:     annotation
-        prefix:   /gdpr
+    spec_shaper_gdpr_reporting_coverage:
+      path: /gdpr/reporting/coverage
+      controller: SpecShaper\GdprBundle\Controller\ReportingController::coverageAction
+      methods: GET
 
 ```
 
 You should make sure that the /gdpr path is behind a firewall in your security settings.
 ```yml
-# app/config/security.yml
+# app/config/security.yaml
     security:
         acces_control:
             # ...
@@ -172,7 +172,7 @@ You should make sure that the /gdpr path is behind a firewall in your security s
 
 Add the personal_data doctrine type to doctrine
 ```yaml
-# app/config/config.yml
+# app/config/config.yaml
     doctrine:
         dbal:
             types:
@@ -187,13 +187,12 @@ User the personal_data column type, and pass the options.
     // ...
     use Symfony\Component\Validator\Constraints as Assert;
     use SpecShaper\GdprBundle\Validator\Constraints as GdprAssert;
+    use SpecShaper\GdprBundle\Model\PersonalData;
     // ...
     
     /**
      * Iban bank account number.
-     *
-     * @var string
-     *
+     * 
      * @GdprAssert\PersonalData({
      *     @Assert\NotBlank,
      *     @Assert\Iban
@@ -216,7 +215,7 @@ User the personal_data column type, and pass the options.
      *     "returnProtection"={"TSS","ENCRYPTED_PDF"}
      * })
      */
-    protected $iban;
+    protected PersonalData $iban;
    
 ```
 Look at the [PersonalData](./Model/PersonalData.php) object constants for the full range of options available.
@@ -343,42 +342,35 @@ use SpecShaper\GdprBundle\Utils\Sorter;
  */
 trait GdprTrait
 {
-    /**
-     * @var EncryptorInterface
-     */
-    protected $encryptor;
+    protected EncryptorInterface $encryptor;
 
     /**
      * Setter injection Encryptor into repository.
-     *
-     * @param EncryptorInterface $encryptor
-     * @return $this
      */
-    public function setEncryptor(EncryptorInterface $encryptor){
+    public function setEncryptor(EncryptorInterface $encryptor): EncryptorInterface
+    {
         $this->encryptor = $encryptor;
         return $this;
     }
 
     /**
-     * Get the Encryptor
-     *
-     * @return EncryptorInterface
+     * Get the Encryptor.
      */
-    public function getEncryptor()
+    public function getEncryptor(): EncryptorInterface
     {
         return $this->encryptor;
     }
 
     /**
      * Function to concat two encrypted values into one new value.
-     *
-     * @param array  $collection
-     * @param string $firstNameField Default is firstName
-     * @param string $lastNameField Default is lastName
-     * @param string $outputField Default is fullName
-     * @return array
      */
-    public function concatToFullName(&$collection, $firstNameField = 'firstName', $lastNameField = 'lastName', $outputField = 'fullName'){
+    public function concatToFullName(
+         array &$collection, 
+         ?string $firstNameField = 'firstName',
+         ?string $lastNameField = 'lastName',
+         ?string $outputField = 'fullName'
+         ): array
+         {
 
         foreach($collection as $key => $entity){
             $firstName = $this->getEncryptor()->decrypt($entity[$firstNameField]->getData());
@@ -393,19 +385,18 @@ trait GdprTrait
 
     /**
      * Sort a array hydrated query result by two columns.
-     *
-     * @param array  $result
-     * @param string $firstOrder
-     * @param string $secondOrder
-     * @return mixed
      */
-    public function sortByTwoColumns(&$result, $firstOrder = 'employeeId', $secondOrder = 'lastName')
-    {
-        // Use SpecShaper\ThemeBundle\Util\Sorter:sortByTwoColumnsCallback as a callback
-        usort($result, array(new Sorter($firstOrder, $secondOrder),'sortByTwoColumnsCallback'));
-
-        return $result;
-    }
+    public function sortByTwoColumns(
+        array &$result,
+        ?string $firstOrder = 'employeeId',
+        ?string$secondOrder = 'lastName'
+        ): array
+        {
+            // Use SpecShaper\ThemeBundle\Util\Sorter:sortByTwoColumnsCallback as a callback
+            usort($result, array(new Sorter($firstOrder, $secondOrder),'sortByTwoColumnsCallback'));
+            return $result;
+        }
+  
 }
 ```
 The trait is used in the repository.
@@ -426,13 +417,40 @@ use AppBundle\Repository\Traits\GdprTrait;
 class EmployeeRepository extends \Doctrine\ORM\EntityRepository
 {
     use GdprTrait;
-    
-
     //....
-    
 }
 ```
-In inject the encryptor into the repository in the controller.
+
+Using a repository as a service, inject the encryptor during construction.
+
+```php
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Organisation;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Doctrine\Persistence\ManagerRegistry;
+use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
+
+/**
+ * OrganisationRepository
+ */
+class OrganisationRepository extends ServiceEntityRepository
+{
+    private EncryptorInterface $encryptor;
+    
+    public function __construct(ManagerRegistry $registry, EncryptorInterface $encryptor)
+    {
+        parent::__construct($registry, Organisation::class);
+        $this->encryptor = $encryptor;
+    }
+    //....    
+}
+```
+
+Alternatively, use the setter in the controller.
 ```php
 <?php
 
@@ -448,7 +466,6 @@ use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
  */
 class EmployeeController extends Controller
 {
-
     /**
      * Lists all Employee entities.
      *
@@ -457,7 +474,8 @@ class EmployeeController extends Controller
      */
     public function allAction(EncryptorInterface $encryptor)
     {
-        $employee = $this->getDoctrine()->getRepository(Employee::class)
+        $employee = $this->getDoctrine()
+            ->getRepository(Employee::class)
             ->setEncryptor($encryptor)
             ->findAll();
     }
@@ -468,7 +486,8 @@ class EmployeeController extends Controller
 
 ### Coverage Report
 
-Access the coverage report by navigating your browser to '\gdpr\reporting\coverage'.      
+Access the coverage report by navigating your browser to '\gdpr\reporting\coverage'.  
+
 This will serve an excel file that contains all the entities and parameters managed by the entity manager.
 If any of the parameters contain the "personal_data" column type it will also list each of the attributes values.
 

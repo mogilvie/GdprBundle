@@ -4,9 +4,8 @@ namespace SpecShaper\GdprBundle\Utils;
 
 class Sorter
 {
-
-    const ORDER_DESC = 'DESC';
-    const ORDER_ASC = 'ASC';
+    public const ORDER_DESC = 'DESC';
+    public const ORDER_ASC = 'ASC';
 
     protected $firstSortOrder;
 
@@ -22,37 +21,42 @@ class Sorter
     }
 
     /**
-     * Order an array by two fields,
+     * Order an array by two fields.
      *
-     * @param        $a
-     * @param        $b
+     * @param $a
+     * @param $b
      *
      * @return int
      */
-    public function sortByTwoColumnsCallback($a, $b){
-
+    public function sortByTwoColumnsCallback($a, $b): int
+    {
         $firstOrder = $this->firstSortOrder;
 
-        $secondOrder= $this->secondSortOrder;
+        $secondOrder = $this->secondSortOrder;
 
-        $methodArray = array(self::ORDER_DESC => 'descSort', self::ORDER_ASC => 'ascSort');
+        $methodArray = [self::ORDER_DESC => 'descSort', self::ORDER_ASC => 'ascSort'];
 
-        if ($a[$firstOrder] == $b[$firstOrder])
-        {
+        if ($a[$firstOrder] == $b[$firstOrder]) {
             // employeeId is the same, sort by lastName
-            if ($a[$secondOrder] > $b[$secondOrder]) return 1;
+            if ($a[$secondOrder] > $b[$secondOrder]) {
+                return 1;
+            }
         }
 
-        if($method = $methodArray[$this->order]) {
-            return $this->$method($a[$firstOrder],$b[$firstOrder]);
+        if ($method = $methodArray[$this->order]) {
+            return $this->$method($a[$firstOrder], $b[$firstOrder]);
         }
+
+        return 1;
     }
 
-    private function descSort($aField, $bField){
+    private function descSort($aField, $bField)
+    {
         return $aField < $bField ? 1 : -1;
     }
 
-    private function ascSort($aField, $bField){
+    private function ascSort($aField, $bField)
+    {
         return $aField > $bField ? 1 : -1;
     }
 }

@@ -10,7 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\Column;
 use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
-use SpecShaper\EncryptBundle\Subscribers\DoctrineEncryptSubscriberInterface;
 use SpecShaper\GdprBundle\Model\PersonalData;
 use SpecShaper\GdprBundle\Types\PersonalDataType;
 use Symfony\Component\Console\Command\Command;
@@ -33,48 +32,37 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class UpdateDataCommand extends Command
 {
-
     private const TEMP_COL_PREFIX = 'gdpr_temp_';
 
-    /** @var EntityManagerInterface */
-    private $em;
+    private EntityManagerInterface $em;
 
-    /** @var Reader*/
-    private $reader;
+    private Reader $reader;
 
-    /** @var Connection */
-    private $connection;
+    private Connection $connection;
 
     /**
-     * @var array An array of the personal_data column types from the entities.
+     * @var array an array of the personal_data column types from the entities
      */
-    private $personalDataFields = [];
+    private array $personalDataFields = [];
 
-    private $numberOfColumns;
-
-    /**
-     * @var bool True if encryption has been disabled in the app config.
-     */
-    private $encryptionDisabled;
+    private int $numberOfColumns;
 
     /**
-     * @var EncryptorInterface
+     * @var bool true if encryption has been disabled in the app config
      */
-    private $encryptor;
+    private bool $encryptionDisabled;
 
-    /**
-     * @var Comparator
-     */
-    private $comparator;
+    private EncryptorInterface $encryptor;
+
+    private Comparator $comparator;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         Reader $reader,
         Connection $defaultConnection,
         EncryptorInterface $encryptor,
-        $encryptionDisabled
-    )
-    {
+        bool $encryptionDisabled
+    ) {
         $this->em = $entityManager;
         $this->reader = $reader;
         $this->connection = $defaultConnection;
@@ -99,7 +87,6 @@ class UpdateDataCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-
         $this->comparator = new Comparator();
 
         $optionalEntityClasses = $this->getCommandProperties($input);
@@ -121,22 +108,18 @@ class UpdateDataCommand extends Command
 
         // Drop the temp columns
         $this->dropTempColumns($output);
-        
+
         return Command::SUCCESS;
     }
 
     /**
      * Get any entities and properties from the command in an array.
-     *
-     * @param Input $input
-     * @return array|bool
      */
-    private function getCommandProperties(InputInterface $input): array|bool
+    private function getCommandProperties(InputInterface $input): ?array
     {
-
         // If command options are an empty array then return false.
-        if(empty($input->getOption('tables'))) {
-            return false;
+        if (empty($input->getOption('tables'))) {
+            return null;
         }
 
         $entityClasses = $input->getOption('tables');
@@ -145,8 +128,7 @@ class UpdateDataCommand extends Command
         $returnArray = [];
 
         // For each class, identify and add any specific properties.
-        foreach($entityClasses as $entityClass){
-
+        foreach ($entityClasses as $entityClass) {
             // Split command entity into class and property
             $classProperty = explode(':', $entityClass);
 
@@ -154,12 +136,12 @@ class UpdateDataCommand extends Command
             $class = $classProperty[0];
 
             // If no class key exists then crate one.
-            if(!array_key_exists($class, $entityClasses)){
+            if (!array_key_exists($class, $entityClasses)) {
                 $entityClasses[$class] = [];
             }
 
             // If no property was appended to the class then return false, alse append the property
-            if(!array_key_exists(1, $classProperty)){
+            if (!array_key_exists(1, $classProperty)) {
                 $returnArray[$class] = false;
             } else {
                 $returnArray[$class][] = $classProperty[1];
@@ -177,23 +159,21 @@ class UpdateDataCommand extends Command
      * Create a schema diff between the two.
      * Execute the queries to alter the original database and create temporary personal data columns.
      *
-     * @param OutputInterface $output
      * @throws \Doctrine\DBAL\DBALException
      * @throws \Doctrine\DBAL\Schema\SchemaException
      */
-    private function createTempDataColumns( OutputInterface $output)
+    private function createTempDataColumns(OutputInterface $output): void
     {
-
         $classCount = 0;
         $propertyCount = 0;
-        foreach($this->personalDataFields as $class => $properties){
-            $classCount++;
-            $propertyCount+= count($properties);
+        foreach ($this->personalDataFields as $class => $properties) {
+            ++$classCount;
+            $propertyCount += count($properties);
         }
 
         $this->numberOfColumns = $propertyCount;
 
-        $output->writeln(sprintf('Creating temporary columns for %s classes and %s properties',$classCount, $propertyCount));
+        $output->writeln(sprintf('Creating temporary columns for %s classes and %s properties', $classCount, $propertyCount));
 
         $schemaManager = $this->connection->getSchemaManager();
 
@@ -205,7 +185,6 @@ class UpdateDataCommand extends Command
 
         // Loop through all of the personal data fields in all entities.
         foreach ($this->personalDataFields as $entityClass => $field) {
-
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
 
@@ -214,7 +193,6 @@ class UpdateDataCommand extends Command
 
             // Loop through each personal_data field in the entity.
             foreach ($field as $propertyArray) {
-
                 // Set the existing column to nullable and no max
                 $column = $table->getColumn($propertyArray['columnName']);
                 $column->setNotnull(false);
@@ -246,12 +224,10 @@ class UpdateDataCommand extends Command
      * Create a new PersonalData object using the current annotation information, serlialse and store in a temp
      * data column.
      *
-     * @param OutputInterface $output
      * @throws \Doctrine\DBAL\DBALException
      */
-    private function createPersonalDataInTempColumn( OutputInterface $output)
+    private function createPersonalDataInTempColumn(OutputInterface $output): void
     {
-
         $output->writeln("Creating personal data objects in $this->numberOfColumns columns");
 
         // Get the query builder to load existing entity data.
@@ -262,23 +238,20 @@ class UpdateDataCommand extends Command
 
         // Loop through all of the personal data fields in all entities.
         foreach ($this->personalDataFields as $entityClass => $field) {
-
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
 
             // Loop through each personal_data field in the entity.
             foreach ($field as $propertyArray) {
-
                 // Get all data for the current entity and field.
                 $queryBuilder
-                    ->select('t.'. $propertyArray['identifier'] .', t.'.$propertyArray['columnName'].' AS originalData')
+                    ->select('t.'.$propertyArray['identifier'].', t.'.$propertyArray['columnName'].' AS originalData')
                     ->from($propertyArray['tableName'], 't');
 
                 $results = $queryBuilder->execute();
 
                 // For each selected entity field create a personal data object and save it to the temporary field.
                 foreach ($results as $result) {
-
                     // Get the original data from the query.
                     $personalData = $result['originalData'];
 
@@ -290,9 +263,8 @@ class UpdateDataCommand extends Command
                     }
 
                     // If the personal data should be encrypted then do so. Otherwise decrypt any existing value.
-                    if (!$this->encryptionDisabled && $propertyArray['annotation']->options['isEncrypted'] === true) {
+                    if (!$this->encryptionDisabled && true === $propertyArray['annotation']->options['isEncrypted']) {
                         $personalData = $this->encryptor->encrypt($personalData);
-
                     } else {
                         $personalData = $this->encryptor->decrypt($personalData);
                     }
@@ -303,30 +275,28 @@ class UpdateDataCommand extends Command
                     // Update the database with the temporary data, set the original data to null.
                     $this->connection->update(
                         $tableName,
-                        array(
+                        [
                             $propertyArray['columnName'] => null,
-                            $propertyArray['tempColName'] => serialize($newPersonalDataObject)
-                        ),
-                        array($propertyArray['identifier'] => $result[$propertyArray['identifier']])
+                            $propertyArray['tempColName'] => serialize($newPersonalDataObject),
+                        ],
+                        [$propertyArray['identifier'] => $result[$propertyArray['identifier']]]
                     );
                 }
                 $progressBar->advance();
             }
-
         }
 
         $progressBar->finish();
-        $output->writeln(".");
+        $output->writeln('.');
     }
 
     /**
-     * Convert Original Column data type to personal_data
+     * Convert Original Column data type to personal_data.
      *
-     * @param OutputInterface $output
      * @throws \Doctrine\DBAL\DBALException
      * @throws \Doctrine\DBAL\Schema\SchemaException
      */
-    private function convertOriginalColumnDataType( OutputInterface $output)
+    private function convertOriginalColumnDataType(OutputInterface $output): void
     {
         $output->writeln('Converting original columns to new personal data column type');
 
@@ -344,7 +314,6 @@ class UpdateDataCommand extends Command
             $table = $toSchema->getTable($tableName);
 
             foreach ($field as $propertyArray) {
-
                 $origionalColName = $propertyArray['columnName'];
 
                 $column = $table->getColumn($origionalColName);
@@ -369,16 +338,15 @@ class UpdateDataCommand extends Command
     }
 
     /**
-     * Reload PersonalData
+     * Reload PersonalData.
      *
      * Move the PersonalData object from the temporary column back to the original column.
      *
-     * @param OutputInterface $output
      * @throws \Doctrine\DBAL\DBALException
      */
-    private function reloadPersonalData( OutputInterface $output)
+    private function reloadPersonalData(OutputInterface $output): void
     {
-            $output->writeln('Reload personal data to original columns');
+        $output->writeln('Reload personal data to original columns');
 
         // Get the query builder to load existing entity data.
         $queryBuilder = $this->connection->createQueryBuilder();
@@ -388,51 +356,46 @@ class UpdateDataCommand extends Command
 
         // Loop through all of the personal data fields in all entities.
         foreach ($this->personalDataFields as $entityClass => $field) {
-
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
 
             // Loop through each personal_data field in the entity.
             foreach ($field as $propertyArray) {
-
                 // Get all data for the current entity and field.
                 $queryBuilder
-                    ->select('t.'. $propertyArray['identifier'] .', t.'.$propertyArray['tempColName'].' AS newPersonalData')
+                    ->select('t.'.$propertyArray['identifier'].', t.'.$propertyArray['tempColName'].' AS newPersonalData')
                     ->from($propertyArray['tableName'], 't');
 
                 $results = $queryBuilder->execute();
 
                 // For each selected entity field create a personal data object and save it to the temporary field.
                 foreach ($results as $result) {
-
                     // Get the copied personal_data from the query.
                     $personalData = $result['newPersonalData'];
 
                     // Update the database with the temporary data, set the original data to null.
                     $this->connection->update(
                         $tableName,
-                        array(
-                            $propertyArray['columnName'] => $personalData
-                        ),
-                        array($propertyArray['identifier'] => $result[$propertyArray['identifier']])
+                        [
+                            $propertyArray['columnName'] => $personalData,
+                        ],
+                        [$propertyArray['identifier'] => $result[$propertyArray['identifier']]]
                     );
                 }
                 $progressBar->advance();
             }
-
         }
         $progressBar->finish();
-        $output->writeln(".");
+        $output->writeln('.');
     }
 
     /**
      * Drop the temporary columns from the schema and remove from the database.
      *
-     * @param OutputInterface $output
      * @throws \Doctrine\DBAL\DBALException
      * @throws \Doctrine\DBAL\Schema\SchemaException
      */
-    private function dropTempColumns( OutputInterface $output)
+    private function dropTempColumns(OutputInterface $output): void
     {
         $output->writeln('Dropping temporary columns');
 
@@ -446,7 +409,6 @@ class UpdateDataCommand extends Command
 
         // Loop through all of the personal data fields in all entities.
         foreach ($this->personalDataFields as $entityClass => $field) {
-
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
 
@@ -455,12 +417,10 @@ class UpdateDataCommand extends Command
 
             // Loop through each personal_data field in the entity.
             foreach ($field as $propertyArray) {
-
                 // Drop the temporary column.
                 if ($table->hasColumn($propertyArray['tempColName'])) {
                     $table->dropColumn($propertyArray['tempColName']);
                 }
-
             }
         }
 
@@ -483,26 +443,25 @@ class UpdateDataCommand extends Command
      * Store the field to an array for processing.
      *
      * @return array
+     *
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    private function setPersonalDataFields($entityClasses = false)
+    private function setPersonalDataFields(?bool $entityClasses = false): array
     {
-
         $managedEntities = $this->em->getMetadataFactory()->getAllMetadata();
 
         /** @var ClassMetadata $managedEntity */
         foreach ($managedEntities as $managedEntity) {
-
             // Ignore mapped superclass entities.
-            if (property_exists($managedEntity, 'isMappedSuperclass') && $managedEntity->isMappedSuperclass === true) {
+            if (property_exists($managedEntity, 'isMappedSuperclass') && true === $managedEntity->isMappedSuperclass) {
                 continue;
             }
 
             $entityClass = str_replace('\\', '/', $managedEntity->getName());
 
             // If specific entity classes have been provided with the command, and this isnt one of them, then continue;
-            if($entityClasses !== false
-                && !array_key_exists(str_replace('\\', '/', $entityClass), $entityClasses)){
+            if (false !== $entityClasses
+                && !array_key_exists(str_replace('\\', '/', $entityClass), $entityClasses)) {
                 continue;
             }
 
@@ -510,7 +469,7 @@ class UpdateDataCommand extends Command
 
             $targetProperties = false;
 
-            if(!empty($entityClasses)){
+            if (!empty($entityClasses)) {
                 $targetProperties = $entityClasses[$entityClass];
             }
 
@@ -523,29 +482,28 @@ class UpdateDataCommand extends Command
         return $this->personalDataFields;
     }
 
-    private function getReferenceProperties(ClassMetadata $managedEntity, \ReflectionProperty $refProperty, $targetProperties){
-
+    private function getReferenceProperties(ClassMetadata $managedEntity, \ReflectionProperty $refProperty, array $targetProperties): void
+    {
         // If specific entity classes have been provided with the command
-        if($targetProperties !== false){
+        if (false !== $targetProperties) {
             // If the class has command has specific properties
 
-            if(!empty($targetProperties)){
+            if (!empty($targetProperties)) {
                 // If this property isn't one of them, then continue
-                if(array_search($refProperty->getName(), $targetProperties) === false){
+                if (false === array_search($refProperty->getName(), $targetProperties)) {
                     return;
                 }
             }
         }
 
         foreach ($this->reader->getPropertyAnnotations($refProperty) as $key => $annotation) {
-
             // Skip any annotation that is not a Column type.
             if (!$annotation instanceof Column) {
                 continue;
             }
 
             // Ignore any column that is not of a personal_data type.
-            if ($annotation->type !== PersonalDataType::NAME) {
+            if (PersonalDataType::NAME !== $annotation->type) {
                 continue;
             }
 
@@ -566,19 +524,17 @@ class UpdateDataCommand extends Command
         }
     }
 
-    private function getTempColumnName($originalColumnName)
+    private function getTempColumnName(string $originalColumnName): string
     {
         return self::TEMP_COL_PREFIX.$originalColumnName;
     }
 
-    private function createPersonalData($data)
+    private function createPersonalData(?string $data): PersonalData
     {
-
-        $personalData = new \SpecShaper\GdprBundle\Model\PersonalData();
+        $personalData = new PersonalData();
 
         $personalData->setData($data);
 
         return $personalData;
-
     }
 }

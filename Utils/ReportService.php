@@ -3,7 +3,7 @@
  * Created by PhpStorm.
  * User: mark
  * Date: 01/02/18
- * Time: 12:08
+ * Time: 12:08.
  */
 
 namespace SpecShaper\GdprBundle\Utils;
@@ -14,11 +14,12 @@ use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\Column;
 use Roromix\Bundle\SpreadsheetBundle\Factory;
 use SpecShaper\GdprBundle\Types\PersonalDataType;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportService
 {
-    private $entityManager;
-    private $reader;
+    private EntityManagerInterface $entityManager;
+    private Reader $reader;
 
     public function __construct(EntityManagerInterface $entityManager, Reader $reader)
     {
@@ -29,16 +30,13 @@ class ReportService
     /**
      * Get all class parameters.
      *
-     * Function to get all the classes from the data base entity manager.
-     * Iterates through each entity and gets all paramters.
+     * Function to get all the classes from the database entity manager.
+     * Iterates through each entity and gets all parameters.
      * If the parameter is a PersonalData parameter then get all the fields of the annotation.
      *
-     * Returns a Excel Streamed Response
-     *
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * Returns an Excel via Streamed Response
      */
-    public function getAllClassParameters()
+    public function getAllClassParameters(): StreamedResponse
     {
         $managedEntities = $this->entityManager->getMetadataFactory()->getAllMetadata();
 
@@ -46,16 +44,13 @@ class ReportService
 
         /** @var ClassMetadata $managedEntity */
         foreach ($managedEntities as $managedEntity) {
-
             $entityClass = $managedEntity->getName();
 
-            $reflectionProperites = $managedEntity->getReflectionProperties();
+            $reflectionProperties = $managedEntity->getReflectionProperties();
 
             /** @var \ReflectionProperty $refProperty */
-            foreach ($reflectionProperites as $refProperty) {
-
+            foreach ($reflectionProperties as $refProperty) {
                 foreach ($this->reader->getPropertyAnnotations($refProperty) as $key => $annotation) {
-
                     // Skip any anotation that is not a Column type.
                     if (!$annotation instanceof Column) {
                         continue;
@@ -64,8 +59,8 @@ class ReportService
                     $options = false;
 
                     // If the column type is personal data then store the options in the array.
-                    if ($annotation->type === PersonalDataType::NAME) {
-                        $options = (array)$annotation->options;
+                    if (PersonalDataType::NAME === $annotation->type) {
+                        $options = (array) $annotation->options;
                     }
 
                     $result[$entityClass][$refProperty->getName()] = $options;
@@ -74,20 +69,15 @@ class ReportService
         }
 
         return $this->createSpreadsheet($result);
-
     }
 
     /**
-     * Create Spreadsheet
+     * Create Spreadsheet.
      *
-     * Creates an excel spreadhsheet response from the array of entities and parameters.
-     *
-     * @param $entities
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * Creates an Excel spreadsheet response from the array of entities and parameters.
      */
-    private function createSpreadsheet($entities){
-
+    private function createSpreadsheet(array $entities): StreamedResponse
+    {
         $factory = new Factory();
 
         $spreadsheet = $factory->createSpreadsheet();
@@ -95,9 +85,9 @@ class ReportService
         $now = new \DateTime('now');
 
         $spreadsheet
-            ->getProperties()->setCreator("Parolla")
-            ->setLastModifiedBy("Parolla")
-            ->setTitle('Personal Data Report-' . $now->format('Y-m-d'))
+            ->getProperties()->setCreator('Parolla')
+            ->setLastModifiedBy('Parolla')
+            ->setTitle('Personal Data Report-'.$now->format('Y-m-d'))
             ->setSubject('Personal Data Report')
             ->setDescription('Personal Data Report')
             ->setKeywords('Personal Data Report')
@@ -116,42 +106,38 @@ class ReportService
         // Create an array to hold the map of column index number to PersonalData field name.
         $personalDataColumnMap = [];
 
-        foreach($entities as $className => $fields){
-
+        foreach ($entities as $className => $fields) {
             foreach ($fields as $field => $personaDataValue) {
                 $activeSheet->setCellValue($classColumn.$row, $className);
                 $activeSheet->setCellValue($paramColumn.$row, $field);
 
                 // If the entity field has personal data then add it to the spreadsheet.
-                if($personaDataValue !== false){
-
+                if (false !== $personaDataValue) {
                     // For each personal data field add the value.
-                    foreach($personaDataValue as $dataField => $value){
-
-                        // If the array of personal data fields doesnt contain this one, then add it.
-                        if(!in_array($dataField, $personalDataColumnMap)){
+                    foreach ($personaDataValue as $dataField => $value) {
+                        // If the array of personal data fields doesn't contain this one, then add it.
+                        if (!in_array($dataField, $personalDataColumnMap)) {
                             $personalDataColumnMap[] = $dataField;
                         }
 
-                        // Get the column number for the datafield in the array, and add the starting index.
+                        // Get the column number for the data field in the array, and add the starting index.
                         $col = array_search($dataField, $personalDataColumnMap) + $privateColumnStart;
 
-                        if(is_array($value)){
-                            $value = implode(', ',$value);
+                        if (is_array($value)) {
+                            $value = implode(', ', $value);
                         }
 
-                        $activeSheet->setCellValueByColumnAndRow($col,$row, $value);
+                        $activeSheet->setCellValueByColumnAndRow($col, $row, $value);
                     }
                 }
-                $row++;
+                ++$row;
             }
-
         }
 
         // Add the headings for the personal data fields.
-        foreach($personalDataColumnMap as $key => $field){
+        foreach ($personalDataColumnMap as $key => $field) {
             $col = $key + $privateColumnStart;
-            $activeSheet->setCellValueByColumnAndRow($col,$headingRow, $field);
+            $activeSheet->setCellValueByColumnAndRow($col, $headingRow, $field);
         }
 
         $activeSheet->setTitle('Coverage Report');
@@ -164,8 +150,8 @@ class ReportService
         $activeSheet->getColumnDimension('B')->setAutoSize(true);
 
         // Set the heading row bold.
-        $headingRowSytle =  $activeSheet->getStyle('A1:J1');
-        $headingRowSytle->getFont()->setBold(true);
+        $headingRowStyle = $activeSheet->getStyle('A1:J1');
+        $headingRowStyle->getFont()->setBold(true);
 
         // Set active sheet index to the first sheet, so Excel opens this as the first sheet
         $spreadsheet->setActiveSheetIndex(0);
@@ -174,10 +160,6 @@ class ReportService
         $writer = $factory->createWriter($spreadsheet);
 
         // create the response
-        $response = $factory->createStreamedResponse($writer);
-
-        return $response;
-
-}
-
+        return $factory->createStreamedResponse($writer);
+    }
 }

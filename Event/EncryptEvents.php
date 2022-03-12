@@ -1,10 +1,5 @@
 <?php
 
-/**
- * SpecShaper\GdprBundle\Event\EncryptEvents.php.
- *
- * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- */
 namespace SpecShaper\GdprBundle\Event;
 
 /**
@@ -14,6 +9,6 @@ namespace SpecShaper\GdprBundle\Event;
  */
 final class EncryptEvents
 {
-    const ENCRYPT = 'encrypt';
-    const DECRYPT = 'decrypt';
+    public const ENCRYPT = 'encrypt';
+    public const DECRYPT = 'decrypt';
 }
