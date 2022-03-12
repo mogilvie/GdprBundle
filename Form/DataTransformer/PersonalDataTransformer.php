@@ -13,7 +13,7 @@ class PersonalDataTransformer implements DataTransformerInterface
     /**
      * {@inheritdoc}
      */
-    public function transform($value)
+    public function transform($value): mixed
     {
         // If null then return an empty space.
         if (null === $value) {
