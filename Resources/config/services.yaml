@@ -1,0 +1,35 @@
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        # automatically injects dependencies in your services
+        autowire: true
+        # automatically registers your services as commands, event subscribers, etc.
+        autoconfigure: true
+        # this means you cannot fetch services directly from the container via $container->get()
+        # if you need to do this, you can override this setting on individual services
+        public: false
+
+    SpecShaper\GdprBundle\:
+        resource: '../../*'
+        # you can exclude directories or files
+        # but if a service is unused, it's removed anyway
+        exclude: '../../{Entity,Repository}'
+
+    SpecShaper\GdprBundle\Controller\:
+        resource: '../../Controller'
+        public: true
+        tags: ['controller.service_arguments']
+
+    # Subscriber Interface, default is DoctrineEncryptSubscriber but it can be overriden in the app config
+    SpecShaper\GdprBundle\Subscribers\GdprSubscriber:
+        arguments:
+            $isDisabled: '%spec_shaper_encrypt.is_disabled%'
+        tags:
+            - { name: doctrine.event_subscriber, connection: default }
+
+    SpecShaper\GdprBundle\Command\UpdateDataCommand:
+        arguments:
+            $encryptionDisabled: '%spec_shaper_encrypt.is_disabled%'
+        tags:
+            - { name: 'console.command', command: 'gdpr:update' }

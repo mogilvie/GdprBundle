@@ -4,7 +4,7 @@ A bundle to aid with the General Data Protection Regulation requirements.
 
 Features include:
 
-- Written for Symfony version 3|4, currently master is being updated to 5
+- Written for Symfony version 3|4|5|6, current master and v3.0 is Symfony 6
 - Provides annotation for adding to entity parameter doc blocks - this method is being deprecated.
 - Uses a PersonalData object and data transformers.
 - Records values for Data Protection Impact Assessments of entity parameters.
@@ -12,15 +12,8 @@ Features include:
 
 ## Version History
 
-### Version 1
-Version 1 of this project used annotations to classify entity parameter personal data.  
-This unfortunately could not be extended to managing live data, it runs into problems where data
-become expired. What should get displayed instead? How can live data status be reported with annotations?
-
-Version 1 Features:
-- [x] Generate a entity parameter coverage report.
-- [x] Generate a summary report of all entity parameters and GDPR annotations.
-
+### Version 3
+Updated for Symfny 5.4|6 and PHP8
 ### Version 2 
 Version 2 uses a PersonalData entity to store the GDPR parameters associated with the personal data parameter.
 
@@ -41,6 +34,16 @@ Version 2 Features:
 - [ ] Create consent forms
 - [ ] Generate consent report
 - [ ] Export data command
+
+### Version 1
+Version 1 of this project used annotations to classify entity parameter personal data.  
+This unfortunately could not be extended to managing live data, it runs into problems where data
+become expired. What should get displayed instead? How can live data status be reported with annotations?
+
+Version 1 Features:
+- [x] Generate a entity parameter coverage report.
+- [x] Generate a summary report of all entity parameters and GDPR annotations.
+
 
 **Warning**
 - This bundle has not been unit tested.
