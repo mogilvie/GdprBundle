@@ -45,9 +45,12 @@ class DisposeCommand extends Command
 
     public function __construct(EntityManagerInterface $em, Reader $reader, Connection $connection)
     {
+
         $this->em = $em;
         $this->reader = $reader;
         $this->connection = $connection;
+        
+        parent::__construct();
     }
 
     protected function configure()
