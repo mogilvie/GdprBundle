@@ -186,8 +186,11 @@ class GdprSubscriber implements EventSubscriber
                 $field->setValue($entity, $fieldPair['value']);
 
                 if ($fieldPair['value'] instanceof PersonalData) {
-                    $decrypted = $this->decryptValue($fieldPair['value']->getData());
-                    $fieldPair['value']->setData($decrypted);
+                    $data = $fieldPair['value']->getData();
+                    if (null !== $data) {
+                        $data = $this->decryptValue($data);
+                    }
+                    $fieldPair['value']->setData($data);
                 }
 
                 $unitOfWork->setOriginalEntityProperty($oid, $field->getName(), $fieldPair['value']);
@@ -293,7 +296,10 @@ class GdprSubscriber implements EventSubscriber
                 $event = new AccessEvent($value);
                 $this->dispatcher->dispatch($event, AccessEvents::UPDATE);
             } else {
-                $data = $this->decryptValue($value->getData());
+                $data = $value->getData();
+                if (null !== $data) {
+                    $data = $this->decryptValue($data);
+                }
                 $value->setData($data);
 
                 // Dispatch an event for the loaded value
