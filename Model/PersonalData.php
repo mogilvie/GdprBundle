@@ -451,7 +451,7 @@ class PersonalData
         return $this;
     }
 
-    public function getData()? string
+    public function getData(): ?string
     {
         return $this->data;
     }
