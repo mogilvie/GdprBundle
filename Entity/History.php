@@ -10,7 +10,6 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * An entity to store the history of any changes/activity to PersonalData objects
  *
- * @todo Add getters and setters
  * @ORM\Entity(repositoryClass="SpecShaper\GdprBundle\Repository\HistoryRepository")
  */
 class History
@@ -65,4 +64,113 @@ class History
      * @ORM\Column(type="string", nullable=true)
      */
     protected string $actionBy;
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     * @return History
+     */
+    public function setId(int $id): History
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEntity(): string
+    {
+        return $this->entity;
+    }
+
+    /**
+     * @param string $entity
+     * @return History
+     */
+    public function setEntity(string $entity): History
+    {
+        $this->entity = $entity;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getField(): string
+    {
+        return $this->field;
+    }
+
+    /**
+     * @param string $field
+     * @return History
+     */
+    public function setField(string $field): History
+    {
+        $this->field = $field;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAction(): string
+    {
+        return $this->action;
+    }
+
+    /**
+     * @param string $action
+     * @return History
+     */
+    public function setAction(string $action): History
+    {
+        $this->action = $action;
+        return $this;
+    }
+
+    /**
+     * @return DateTimeInterface
+     */
+    public function getActionDate(): DateTimeInterface
+    {
+        return $this->actionDate;
+    }
+
+    /**
+     * @param DateTimeInterface $actionDate
+     * @return History
+     */
+    public function setActionDate(DateTimeInterface $actionDate): History
+    {
+        $this->actionDate = $actionDate;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getActionBy(): string
+    {
+        return $this->actionBy;
+    }
+
+    /**
+     * @param string $actionBy
+     * @return History
+     */
+    public function setActionBy(string $actionBy): History
+    {
+        $this->actionBy = $actionBy;
+        return $this;
+    }
+
 }
