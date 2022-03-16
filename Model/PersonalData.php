@@ -101,7 +101,7 @@ class PersonalData
      *
      * Gender identity, health details, political affiliations.
      */
-    public string $data;
+    public ?string $data = null;
 
     /**
      * The date time object that the data was created.
@@ -451,12 +451,12 @@ class PersonalData
         return $this;
     }
 
-    public function getData()
+    public function getData()? string
     {
         return $this->data;
     }
 
-    public function setData(string $data): PersonalData
+    public function setData(?string $data): PersonalData
     {
         $this->data = $data;
 
