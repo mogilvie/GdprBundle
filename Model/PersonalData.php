@@ -115,7 +115,7 @@ class PersonalData
      *
      * Set in the GdprSubscriber via the UoW update process
      */
-    public DateTimeInterface $updatedOn;
+    public ?DateTimeInterface $updatedOn;
 
     /**
      * The format for the string data.
@@ -179,7 +179,7 @@ class PersonalData
      *   - Unambiguous consent of the individual
      *   - Legitimate interest of the data controller
      */
-    public string $basisOfCollection;
+    public ?string $basisOfCollection;
 
     /**
      * Identifiable By.
@@ -188,7 +188,7 @@ class PersonalData
      *
      * @var string The method by which the information might identify an individual
      */
-    public string $identifiableBy;
+    public ?string $identifiableBy;
 
     /**
      * Who typically provides the data.
@@ -202,12 +202,12 @@ class PersonalData
      *
      * The method of transfer from the supplier to this database.
      */
-    public array $methodOfReceipt;
+    public ?array $methodOfReceipt;
 
     /**
      * How is the data protected in transit.
      */
-    public array $receiptProtection;
+    public ?array $receiptProtection;
 
     /**
      * Why do you need this data.
@@ -234,7 +234,7 @@ class PersonalData
     /**
      * Disposal method arguments.
      */
-    public array $disposeByArgs;
+    public ?array $disposeByArgs;
 
     /**
      * Keep Until.
@@ -246,12 +246,12 @@ class PersonalData
     /**
      * How do we return this data.
      */
-    public array $methodOfReturn;
+    public ?array $methodOfReturn;
 
     /**
      * How is the date protected when returned, rendered or displayed?
      */
-    public array $returnProtection;
+    public ?array $returnProtection;
 
     /**
      * Return a string of the data based on data format.
