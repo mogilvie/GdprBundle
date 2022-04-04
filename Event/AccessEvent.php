@@ -4,11 +4,6 @@ namespace SpecShaper\GdprBundle\Event;
 
 use Symfony\Contracts\EventDispatcher\Event;
 
-/**
- * EncryptEvent.
- *
- * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- */
 class AccessEvent extends Event
 {
     /**

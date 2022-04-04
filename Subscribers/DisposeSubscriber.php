@@ -7,9 +7,6 @@ use SpecShaper\GdprBundle\Event\DisposeEvent;
 use SpecShaper\GdprBundle\Event\DisposeEvents;
 use SpecShaper\GdprBundle\Utils\Disposer;
 
-/**
- * Doctrine event subscriber which encrypt/decrypt entities.
- */
 class DisposeSubscriber implements EventSubscriber
 {
     /**

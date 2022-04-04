@@ -7,11 +7,6 @@ use Doctrine\DBAL\Types\ConversionException;
 use Doctrine\DBAL\Types\Type;
 use SpecShaper\GdprBundle\Model\PersonalData;
 
-/**
- * Personal Data Object.
- *
- * @author Mark Ogilvie
- */
 final class PersonalDataType extends Type
 {
     public const NAME = 'personal_data';

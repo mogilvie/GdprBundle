@@ -36,14 +36,12 @@ class PersonalDataTransformer implements DataTransformerInterface
             return 'XXX';
         }
 
-        // Otherwise return the base data.
+        // Otherwise, return the base data.
         return $value->getData();
     }
 
     /**
      * {@inheritdoc}
-     *
-     * @return PersonalData|false
      */
     public function reverseTransform($value): ?PersonalData
     {

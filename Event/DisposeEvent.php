@@ -8,35 +8,23 @@ use Symfony\Contracts\EventDispatcher\Event;
 /**
  * Class DisposeEvent.
  *
- * An event thrown when an parameter is to be disposed of.
+ * An event thrown when a parameter is to be disposed of.
  *
- * Can be used to interecpt parameter disposal and implement a custom method.
+ * Can be used to intercept parameter disposal and implement a custom method.
  */
 class DisposeEvent extends Event
 {
     /**
-     * The string / object to be encrypted or decrypted.
-     *
-     * @since Available since Release 1.0.0
-     */
-    protected string $parameter;
-
-    protected string $method;
-
-    protected array $args;
-
-    /**
      * DisposeEvent constructor.
      *
-     * @param        $parameter the parameter to be disposed of
+     * @param string $parameter The parameter to be disposed of
      * @param string $method    The disposal method
      */
-    public function __construct(string $parameter, ?string $method = PersonalData::DISPOSE_BY_SET_NULL, ?array $args = [])
-    {
-        $this->parameter = $parameter;
-        $this->method = $method;
-        $this->args = $args;
-    }
+    public function __construct(
+        protected string $parameter,
+        protected ?string $method = PersonalData::DISPOSE_BY_SET_NULL,
+        protected ?array $args = [])
+    {}
 
     public function getParameter(): string
     {

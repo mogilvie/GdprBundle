@@ -12,7 +12,7 @@ use SpecShaper\GdprBundle\Utils\Disposal\SetNull;
 
 class Disposer
 {
-    public function disposeByPersonalData(PersonalData $personalData)
+    public function disposeByPersonalData(PersonalData $personalData): PersonalData
     {
         $disposedData = $this->dispose(
             $personalData->getData(),
@@ -25,7 +25,7 @@ class Disposer
         return $personalData;
     }
 
-    public function dispose($data, $method, $args)
+    public function dispose($data, string $method, $args): PersonalData
     {
         /* @var DisposalInterface $disposer */
         switch ($method) {

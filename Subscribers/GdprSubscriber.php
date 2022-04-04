@@ -5,6 +5,7 @@ namespace SpecShaper\GdprBundle\Subscribers;
 use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
@@ -30,18 +31,6 @@ class GdprSubscriber implements EventSubscriber
     public const ENCRYPTOR_INTERFACE_NS = EncryptorInterface::class;
 
     /**
-     * Encryptor.
-     */
-    protected EncryptorInterface $encryptor;
-
-    protected EventDispatcherInterface $dispatcher;
-
-    /**
-     * Annotation reader.
-     */
-    protected Reader $annReader;
-
-    /**
      * Register to avoid multi decode operations for one entity.
      */
     private array $decodedRegistry = [];
@@ -59,25 +48,21 @@ class GdprSubscriber implements EventSubscriber
      */
     private array $postFlushDecryptQueue = [];
 
+    /**
+     * If encryption is disabled in the app parameters.
+     */
     private bool $isDisabled;
 
-    /**
-     * @param $isDisabled
-     */
-    public function __construct(Reader $annReader, EncryptorInterface $encryptor, EventDispatcherInterface $dispatcher, bool $isDisabled)
+    public function __construct(
+        protected Reader $annReader,
+        protected EncryptorInterface $encryptor,
+        protected EventDispatcherInterface $dispatcher,
+        bool $isDisabled)
     {
-        $this->annReader = $annReader;
-        $this->encryptor = $encryptor;
-        $this->dispatcher = $dispatcher;
         $this->isDisabled = $isDisabled;
     }
 
-    /**
-     * Return the encryptor.
-     *
-     * @return \SpecShaper\EncryptBundle\Encryptors\EncryptorInterface
-     */
-    public function getEncryptor()
+    public function getEncryptor(): EncryptorInterface
     {
         return $this->encryptor;
     }
@@ -87,12 +72,8 @@ class GdprSubscriber implements EventSubscriber
      *
      * Used to programmatically disable encryption on flush operations.
      * Decryption still occurs if values have the <ENC> suffix.
-     *
-     * @param bool $isDisabled
-     *
-     * @return $this
      */
-    public function setIsDisabled($isDisabled = true)
+    public function setIsDisabled(?bool $isDisabled = true): GdprSubscriber
     {
         $this->isDisabled = $isDisabled;
 
@@ -141,7 +122,7 @@ class GdprSubscriber implements EventSubscriber
     /**
      * Processes the entity for an onFlush event.
      */
-    protected function entityOnFlush(object $entity, EntityManager $em, ?bool $isNewEntity = true): void
+    protected function entityOnFlush(object $entity, EntityManagerInterface $em, ?bool $isNewEntity = true): void
     {
         $objId = spl_object_hash($entity);
 
@@ -225,12 +206,8 @@ class GdprSubscriber implements EventSubscriber
      *
      * If the value is an object, or if it does not contain the suffic <ENC> then return the value itself back.
      * Otherwise, decrypt the value and return.
-     *
-     * @param $value
-     *
-     * @return string
      */
-    public function decryptValue(string $value)
+    public function decryptValue(string $value): string
     {
         return $this->encryptor->decrypt($value);
     }
@@ -243,14 +220,8 @@ class GdprSubscriber implements EventSubscriber
      * If the entity is newly created then set the createdOn date, and if updated then set the updatedON date.
      *
      * If loading the entity then the method will decrypt the data field.
-     *
-     * @param      $entity
-     * @param bool $isFlush
-     * @param bool $isNewEntity
-     *
-     * @throws GdprException
      */
-    protected function processFields(object $entity, EntityManager $em, ?bool $isFlush = true, ?bool $isNewEntity = true): bool
+    protected function processFields(object $entity, EntityManagerInterface $em, ?bool $isFlush = true, ?bool $isNewEntity = true): bool
     {
         $properties = $this->getPersonalDataFields($entity, $em);
 
@@ -339,12 +310,7 @@ class GdprSubscriber implements EventSubscriber
         $this->decodedRegistry[spl_object_hash($entity)] = true;
     }
 
-    /**
-     * @param $entity
-     *
-     * @return \ReflectionProperty[]
-     */
-    protected function getPersonalDataFields(object $entity, EntityManager $em): array
+    protected function getPersonalDataFields(object $entity, EntityManagerInterface $em): array
     {
         $className = get_class($entity);
 
@@ -376,7 +342,6 @@ class GdprSubscriber implements EventSubscriber
 
     public function updateFromAnnotations(string $entity, string $field, PersonalData $personalData): PersonalData
     {
-        /** @var \ReflectionProperty $refProperty */
         $refProperty = $this->personalDataFieldCache[$entity][$field];
         $annotation = $this->annReader->getPropertyAnnotation($refProperty, Column::class);
 
@@ -390,7 +355,7 @@ class GdprSubscriber implements EventSubscriber
             if (method_exists($personalData, $method_name)) {
                 $personalData->$method_name($value);
             } else {
-                throw new GdprException('Definition of "personal_data" option "'.$optionName.'" does not have a matching setter "'.$method_name.'" in '.$entity.'::'.$field);
+                throw new GdprException(sprintf('Definition of "personal_data" option %s does not have a matching setter %s in %s::%s', $optionName, $method_name, $entity, $field));
             }
         }
 

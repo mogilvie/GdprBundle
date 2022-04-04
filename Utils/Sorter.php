@@ -7,27 +7,10 @@ class Sorter
     public const ORDER_DESC = 'DESC';
     public const ORDER_ASC = 'ASC';
 
-    protected $firstSortOrder;
-
-    protected $secondSortOrder;
-
-    protected $order;
-
-    public function __construct($firstSortOrder, $secondSortOrder, $order = self::ORDER_DESC)
+    public function __construct(protected $firstSortOrder, protected $secondSortOrder, protected ?string $order = self::ORDER_DESC)
     {
-        $this->firstSortOrder = $firstSortOrder;
-        $this->secondSortOrder = $secondSortOrder;
-        $this->order = $order;
     }
 
-    /**
-     * Order an array by two fields.
-     *
-     * @param $a
-     * @param $b
-     *
-     * @return int
-     */
     public function sortByTwoColumnsCallback($a, $b): int
     {
         $firstOrder = $this->firstSortOrder;
@@ -48,15 +31,5 @@ class Sorter
         }
 
         return 1;
-    }
-
-    private function descSort($aField, $bField)
-    {
-        return $aField < $bField ? 1 : -1;
-    }
-
-    private function ascSort($aField, $bField)
-    {
-        return $aField > $bField ? 1 : -1;
     }
 }

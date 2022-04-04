@@ -6,6 +6,7 @@ use Doctrine\Common\Annotations\Reader;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\Column;
@@ -34,11 +35,10 @@ class UpdateDataCommand extends Command
 {
     private const TEMP_COL_PREFIX = 'gdpr_temp_';
 
-    private EntityManagerInterface $em;
-
-    private Reader $reader;
-
-    private Connection $connection;
+    /**
+     * @var bool true if encryption has been disabled in the app config
+     */
+    private bool $encryptionDisabled;
 
     /**
      * @var array an array of the personal_data column types from the entities
@@ -47,28 +47,16 @@ class UpdateDataCommand extends Command
 
     private int $numberOfColumns;
 
-    /**
-     * @var bool true if encryption has been disabled in the app config
-     */
-    private bool $encryptionDisabled;
-
-    private EncryptorInterface $encryptor;
-
     private Comparator $comparator;
 
     public function __construct(
-        EntityManagerInterface $entityManager,
-        Reader $reader,
-        Connection $defaultConnection,
-        EncryptorInterface $encryptor,
+        private EntityManagerInterface $em,
+        private Reader $reader,
+        private Connection $connection,
+        private EncryptorInterface $encryptor,
         bool $encryptionDisabled
     ) {
-        $this->em = $entityManager;
-        $this->reader = $reader;
-        $this->connection = $defaultConnection;
-        $this->encryptor = $encryptor;
         $this->encryptionDisabled = $encryptionDisabled;
-
         parent::__construct();
     }
 
@@ -158,9 +146,6 @@ class UpdateDataCommand extends Command
      * Compares the original schema with the new modified schema
      * Create a schema diff between the two.
      * Execute the queries to alter the original database and create temporary personal data columns.
-     *
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \Doctrine\DBAL\Schema\SchemaException
      */
     private function createTempDataColumns(OutputInterface $output): void
     {
@@ -183,7 +168,7 @@ class UpdateDataCommand extends Command
         // Clone the schema to make alterations to.
         $toSchema = clone $fromSchema;
 
-        // Loop through all of the personal data fields in all entities.
+        // Loop through all personal data fields in all entities.
         foreach ($this->personalDataFields as $entityClass => $field) {
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
@@ -199,7 +184,7 @@ class UpdateDataCommand extends Command
 
                 // Create a new temporary column in the table to store the existing data as a PersonalData object.
                 if (!$table->hasColumn($propertyArray['tempColName'])) {
-                    $table->addColumn($propertyArray['tempColName'], Type::OBJECT);
+                    $table->addColumn($propertyArray['tempColName'], Types::OBJECT);
                 }
             }
         }
@@ -212,7 +197,7 @@ class UpdateDataCommand extends Command
 
         // Execute the queries to modify the database.
         foreach ($queries as $query) {
-            $this->connection->exec($query);
+            $this->connection->executeStatement($query);
         }
     }
 
@@ -236,7 +221,7 @@ class UpdateDataCommand extends Command
         $progressBar = new ProgressBar($output, $this->numberOfColumns);
         $progressBar->start();
 
-        // Loop through all of the personal data fields in all entities.
+        // Loop through all personal data fields in all entities.
         foreach ($this->personalDataFields as $entityClass => $field) {
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
@@ -292,9 +277,6 @@ class UpdateDataCommand extends Command
 
     /**
      * Convert Original Column data type to personal_data.
-     *
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \Doctrine\DBAL\Schema\SchemaException
      */
     private function convertOriginalColumnDataType(OutputInterface $output): void
     {
@@ -314,9 +296,9 @@ class UpdateDataCommand extends Command
             $table = $toSchema->getTable($tableName);
 
             foreach ($field as $propertyArray) {
-                $origionalColName = $propertyArray['columnName'];
+                $originalColName = $propertyArray['columnName'];
 
-                $column = $table->getColumn($origionalColName);
+                $column = $table->getColumn($originalColName);
 
                 $type = Type::getType('personal_data');
 
@@ -333,7 +315,7 @@ class UpdateDataCommand extends Command
         $queries = $schemaDiff->toSql($platform); // queries to get from one to another schema.
 
         foreach ($queries as $query) {
-            $this->connection->exec($query);
+            $this->connection->executeStatement($query);
         }
     }
 
@@ -354,7 +336,7 @@ class UpdateDataCommand extends Command
         $progressBar = new ProgressBar($output, $this->numberOfColumns);
         $progressBar->start();
 
-        // Loop through all of the personal data fields in all entities.
+        // Loop through all personal data fields in all entities.
         foreach ($this->personalDataFields as $entityClass => $field) {
             // Get the name of the entity table in the database.
             $tableName = $this->em->getClassMetadata($entityClass)->getTableName();
@@ -391,9 +373,6 @@ class UpdateDataCommand extends Command
 
     /**
      * Drop the temporary columns from the schema and remove from the database.
-     *
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \Doctrine\DBAL\Schema\SchemaException
      */
     private function dropTempColumns(OutputInterface $output): void
     {
@@ -432,7 +411,7 @@ class UpdateDataCommand extends Command
 
         // Run the queries.
         foreach ($queries as $query) {
-            $this->connection->exec($query);
+            $this->connection->executeStatement($query);
         }
     }
 
@@ -441,10 +420,6 @@ class UpdateDataCommand extends Command
      *
      * Visit every entity and identify fields that contain a personal_data annotation.
      * Store the field to an array for processing.
-     *
-     * @return array
-     *
-     * @throws \Doctrine\ORM\Mapping\MappingException
      */
     private function setPersonalDataFields(?bool $entityClasses = false): array
     {
@@ -487,10 +462,9 @@ class UpdateDataCommand extends Command
         // If specific entity classes have been provided with the command
         if (false !== $targetProperties) {
             // If the class has command has specific properties
-
             if (!empty($targetProperties)) {
                 // If this property isn't one of them, then continue
-                if (false === array_search($refProperty->getName(), $targetProperties)) {
+                if (!in_array($refProperty->getName(), $targetProperties)) {
                     return;
                 }
             }

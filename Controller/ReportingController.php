@@ -6,7 +6,6 @@ use SpecShaper\GdprBundle\Utils\ReportService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Coverage controller.
@@ -37,11 +36,4 @@ class ReportingController extends AbstractController
 
         return $response;
     }
-
-//    /**
-//     * @Route("/{table}/{parameter}/details", name="reporting_details", methods={"GET"})
-//     */
-//    public function detailsAction($table, $parameter)
-//    {
-//    }
 }

@@ -18,14 +18,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportService
 {
-    private EntityManagerInterface $entityManager;
-    private Reader $reader;
 
-    public function __construct(EntityManagerInterface $entityManager, Reader $reader)
-    {
-        $this->entityManager = $entityManager;
-        $this->reader = $reader;
-    }
+    public function __construct(private EntityManagerInterface $entityManager, private Reader $reader)
+    { }
 
     /**
      * Get all class parameters.

@@ -2,11 +2,6 @@
 
 namespace SpecShaper\GdprBundle\Event;
 
-/**
- * EncryptEvents.
- *
- * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- */
 final class AccessEvents
 {
     public const LOAD = 'gdpr.personal_data.load';

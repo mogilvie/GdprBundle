@@ -1,18 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mark
- * Date: 01/02/18
- * Time: 11:57
- */
 
 namespace SpecShaper\GdprBundle\Controller;
 
-use Symfony\Component\Routing\Annotation\Route;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Portability controller.
@@ -25,20 +16,18 @@ use Symfony\Component\HttpFoundation\Request;
 class PortabilityController extends AbstractController
 {
     /**
-     * Owner Action
+     * Owner Action.
      *
      * Action to return the full information held pertaining to an organisation.
      *
      * @Route("/{id}/owner", name="portability_owner", methods={"GET"})
-     *
      */
     public function ownerAction()
     {
-
     }
 
     /**
-     * Individual Action
+     * Individual Action.
      *
      * Action to return all the information held pertaining to an individual.
      *
@@ -46,6 +35,5 @@ class PortabilityController extends AbstractController
      */
     public function individualAction()
     {
-
     }
 }

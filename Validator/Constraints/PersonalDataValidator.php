@@ -8,9 +8,6 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
-/**
- * @author Mark Ogilvie <mark.ogilvie@ogilvieconsulting.net>
- */
 class PersonalDataValidator extends ConstraintValidator
 {
     /**

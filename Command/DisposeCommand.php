@@ -2,11 +2,9 @@
 
 namespace SpecShaper\GdprBundle\Command;
 
-
 use Doctrine\Common\Annotations\Reader;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Comparator;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\Column;
@@ -29,27 +27,13 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class DisposeCommand extends Command
 {
-    private EntityManagerInterface $em;
-
-    private Reader $reader;
-
-    private Connection $connection;
 
     private array $personalDataFields = [];
-
-    /** @var Comparator */
     private ?Comparator $comparator = null;
-
-    /** @var Disposer */
     private ?Disposer $disposer = null;
 
-    public function __construct(EntityManagerInterface $em, Reader $reader, Connection $connection)
+    public function __construct(private EntityManagerInterface $em, private Reader $reader, private Connection $connection)
     {
-
-        $this->em = $em;
-        $this->reader = $reader;
-        $this->connection = $connection;
-        
         parent::__construct();
     }
 
@@ -80,8 +64,6 @@ class DisposeCommand extends Command
      *
      * Visit every entity and identify fields that contain a personal_data annotation.
      * Store the field to an array for processing.
-     *
-     * @throws \Doctrine\ORM\Mapping\MappingException
      */
     private function getPersonalDataFields(): array
     {
@@ -135,9 +117,6 @@ class DisposeCommand extends Command
      * Replace personal data with annonymised data if the retention period has been passed.
      *
      * @todo Work in progress
-     *
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \Doctrine\ORM\Mapping\MappingException
      */
     private function replacePersonalData(OutputInterface $output): void
     {
