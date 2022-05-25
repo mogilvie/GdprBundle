@@ -10,6 +10,7 @@ use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Column;
+use Doctrine\Common\Util\ClassUtils;
 use SpecShaper\EncryptBundle\Annotations\Encrypted;
 use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
 use SpecShaper\GdprBundle\Event\AccessEvent;
@@ -129,12 +130,14 @@ class GdprSubscriber implements EventSubscriber
         foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
             // Note that the third parameter is set to true for new entity insertions.
             $this->entityOnFlush($entity, $em, true);
-            $unitOfWork->recomputeSingleEntityChangeSet($em->getClassMetadata(get_class($entity)), $entity);
+            $className = ClassUtils::getClass($entity);
+            $unitOfWork->recomputeSingleEntityChangeSet($em->getClassMetadata($className), $entity);
         }
 
         foreach ($unitOfWork->getScheduledEntityUpdates() as $entity) {
             $this->entityOnFlush($entity, $em, false);
-            $unitOfWork->recomputeSingleEntityChangeSet($em->getClassMetadata(get_class($entity)), $entity);
+            $className = ClassUtils::getClass($entity);
+            $unitOfWork->recomputeSingleEntityChangeSet($em->getClassMetadata($className), $entity);
         }
     }
 
@@ -256,6 +259,7 @@ class GdprSubscriber implements EventSubscriber
 
         $unitOfWork = $em->getUnitOfWork();
         $oid = spl_object_hash($entity);
+        $className = ClassUtils::getClass($entity);
 
         foreach ($properties as $refProperty) {
             $value = $refProperty->getValue($entity);
@@ -280,7 +284,7 @@ class GdprSubscriber implements EventSubscriber
             // If the operation is a load then attempt to decrypt the data field.
             if ($isFlush) {
                 // Update the PersonalData object with the current entity annotations.
-                $this->updateFromAnnotations(get_class($entity), $refProperty->getName(), $value);
+                $this->updateFromAnnotations($className, $refProperty->getName(), $value);
 
                 // Set the updatedOn field
                 $now = new \DateTime('now');
@@ -346,7 +350,7 @@ class GdprSubscriber implements EventSubscriber
      */
     protected function getPersonalDataFields(object $entity, EntityManager $em): array
     {
-        $className = get_class($entity);
+        $className = ClassUtils::getClass($entity);
 
         if (isset($this->personalDataFieldCache[$className])) {
             return $this->personalDataFieldCache[$className];
