@@ -166,7 +166,7 @@ class PersonalData
      * Indirect information is where this particular piece of information might be combined with another
      * data set to identify an individual.
      */
-    public ?string $idMethod;
+    public ?string $idMethod = null;
 
     /**
      * What is the basis for collection of this data?
@@ -179,7 +179,7 @@ class PersonalData
      *   - Unambiguous consent of the individual
      *   - Legitimate interest of the data controller
      */
-    public ?string $basisOfCollection;
+    public ?string $basisOfCollection = null;
 
     /**
      * Identifiable By.
@@ -188,40 +188,40 @@ class PersonalData
      *
      * @var string The method by which the information might identify an individual
      */
-    public ?string $identifiableBy;
+    public ?string $identifiableBy = null;
 
     /**
      * Who typically provides the data.
      *
      * Was it user supplied, client supplied, generated?
      */
-    public ?string $providedBy;
+    public ?string $providedBy = null;
 
     /**
      * How did we receive this information?
      *
      * The method of transfer from the supplier to this database.
      */
-    public ?array $methodOfReceipt;
+    public ?array $methodOfReceipt = [];
 
     /**
      * How is the data protected in transit.
      */
-    public ?array $receiptProtection;
+    public ?array $receiptProtection = [];
 
     /**
      * Why do you need this data.
      *
      * @var string a text note explaining why this information is required
      */
-    public ?string $purposeFor;
+    public ?string $purposeFor = null;
 
     /**
      * How long the information is to be retained in the database for.
      *
      * @var DateInterval A DateInterval string such as P6Y
      */
-    public ?DateInterval $retainFor;
+    public null|string|DateInterval $retainFor = null;
 
     /**
      * Disposal method.
@@ -229,29 +229,29 @@ class PersonalData
      * What happens at the end of the data's usefulness.
      * Dispose, aggregate or make anonymous
      */
-    public ?string $disposeBy;
+    public ?string $disposeBy = null;
 
     /**
      * Disposal method arguments.
      */
-    public ?array $disposeByArgs;
+    public ?array $disposeByArgs = [];
 
     /**
      * Keep Until.
      *
      * The date when the data will be kept until
      */
-    public ?DateTimeInterface $keepUntil;
+    public ?DateTimeInterface $keepUntil = null;
 
     /**
      * How do we return this data.
      */
-    public ?array $methodOfReturn;
+    public ?array $methodOfReturn = [];
 
     /**
      * How is the date protected when returned, rendered or displayed?
      */
-    public ?array $returnProtection;
+    public ?array $returnProtection = [];
 
     /**
      * Return a string of the data based on data format.
@@ -361,7 +361,12 @@ class PersonalData
         return $this;
     }
 
-    public function setIdentifiableBy(string $identifiableBy): PersonalData
+    public function getIdentifiableBy(): ?string
+    {
+        return $this->identifiableBy;
+    }
+
+    public function setIdentifiableBy(?string $identifiableBy): PersonalData
     {
         $this->identifiableBy = $identifiableBy;
 

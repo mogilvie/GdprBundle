@@ -47,9 +47,9 @@ class PersonalDataExtension extends AbstractExtension
         }
 
 //        // If value is not a personal data object then return it.
-//        if (!$personalData instanceof PersonalData) {
-//            return $personalData;
-//        }
+        if (!$personalData instanceof PersonalData) {
+            return $personalData;
+        }
 
         // If the data is expired then return the expired value
         if ($personalData->isExpired()) {

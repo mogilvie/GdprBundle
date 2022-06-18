@@ -10,32 +10,12 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class PersonalDataType extends AbstractType
 {
-    private PersonalDataTransformer $transformer;
-
-    /**
-     * {@inheritdoc}
-     */
-    public function __construct(PersonalDataTransformer $transformer)
-    {
-        $this->transformer = $transformer;
-    }
-
     /**
      * {@inheritdoc}
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $builder->addModelTransformer($this->transformer);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function configureOptions(OptionsResolver $resolver)
-    {
-        $resolver->setDefaults([
-            'invalid_message' => 'The selected issue does not exist',
-        ]);
+        $builder->addModelTransformer(new PersonalDataTransformer());
     }
 
     /**

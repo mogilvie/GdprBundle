@@ -5,11 +5,10 @@ namespace SpecShaper\GdprBundle\Form\DataTransformer;
 use SpecShaper\GdprBundle\Model\PersonalData;
 use Symfony\Component\Form\DataTransformerInterface;
 
-/**
- * @author      Mark Ogilvie <mark.ogilvie@specshaper.com>
- */
 class PersonalDataTransformer implements DataTransformerInterface
 {
+    private ?PersonalData $personalDataObject = null;
+
     /**
      * {@inheritdoc}
      */
@@ -30,11 +29,8 @@ class PersonalDataTransformer implements DataTransformerInterface
             return $value;
         }
 
-        // If it is expired then return obscured
-        // @todo use the expiration methods to return a value.
-        if ($value->isExpired()) {
-            return 'XXX';
-        }
+        // Store the personal data object for submission.
+        $this->personalDataObject = $value;
 
         // Otherwise, return the base data.
         return $value->getData();
@@ -45,15 +41,30 @@ class PersonalDataTransformer implements DataTransformerInterface
      */
     public function reverseTransform($value): ?PersonalData
     {
+
         // Return if null or white space.
         if (null === $value || ctype_space($value)) {
             return null;
         }
 
-        $personalData = new PersonalData();
+        // If there is no PersonalData object on form render, then create one for submission.
+        if(null === $this->personalDataObject){
+            $this->personalDataObject = new PersonalData();
+        }
 
-        $personalData->setData($value);
+        // If the value is same as the original value then return the original personal data object.
+        // The returned object has the same doctrine oid number, so will not trigger an entity update.
+        if($value === $this->personalDataObject->getData($value)){
+            return $this->personalDataObject;
+        }
 
-        return $personalData;
+        // Otherwise create a clone of the original personal data object, in order to trigger UoW update.
+        $clonedObject = clone $this->personalDataObject;
+
+        // Set the submitted data to the cloned object.
+        $clonedObject->setData($value);
+
+        return $clonedObject;
+
     }
 }

@@ -4,17 +4,14 @@ namespace SpecShaper\GdprBundle\Subscribers;
 
 use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\EventSubscriber;
-use Doctrine\ORM\EntityManager;
+use Doctrine\Common\Util\ClassUtils;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Column;
-use SpecShaper\EncryptBundle\Annotations\Encrypted;
 use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
-use SpecShaper\GdprBundle\Event\AccessEvent;
-use SpecShaper\GdprBundle\Event\AccessEvents;
 use SpecShaper\GdprBundle\Exception\GdprException;
 use SpecShaper\GdprBundle\Model\PersonalData;
 use SpecShaper\GdprBundle\Types\PersonalDataType;
@@ -34,6 +31,19 @@ class GdprSubscriber implements EventSubscriber
      * Register to avoid multi decode operations for one entity.
      */
     private array $decodedRegistry = [];
+
+    /**
+     * An array of decoded values populated during the onLoad event.
+     * Used to compare any resubmitted values during onFlush event.
+     * If the flushed unencoded value is the same as in the array then there is no change
+     * to the value and the entity field update is removed from the Unit of Work change set.
+     */
+    private array $decodedValues = [];
+
+    /**
+     * An array of entity parameters where the loaded attributes do not match the entity persisted attributes.
+     */
+    private array $annotationsFieldChanged = [];
 
     /**
      * Caches information on an entity's PersonalData fields in an array keyed on
@@ -95,59 +105,6 @@ class GdprSubscriber implements EventSubscriber
     }
 
     /**
-     * Update the PersonalData object before we persist it to the database.
-     *
-     * Notice that we do not recalculate changes otherwise the entity will be written
-     * every time (Because it is going to differ from the un-encrypted value)
-     */
-    public function onFlush(OnFlushEventArgs $args)
-    {
-        $em = $args->getEntityManager();
-        $unitOfWork = $em->getUnitOfWork();
-
-        $this->postFlushDecryptQueue = [];
-
-        foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
-            // Note that the third parameter is set to true for new entity insertions.
-            $this->entityOnFlush($entity, $em, true);
-            $unitOfWork->recomputeSingleEntityChangeSet($em->getClassMetadata(get_class($entity)), $entity);
-        }
-
-        foreach ($unitOfWork->getScheduledEntityUpdates() as $entity) {
-            $this->entityOnFlush($entity, $em, false);
-            $unitOfWork->recomputeSingleEntityChangeSet($em->getClassMetadata(get_class($entity)), $entity);
-        }
-    }
-
-    /**
-     * Processes the entity for an onFlush event.
-     */
-    protected function entityOnFlush(object $entity, EntityManagerInterface $em, ?bool $isNewEntity = true): void
-    {
-        $objId = spl_object_hash($entity);
-
-        $fields = [];
-
-        foreach ($this->getPersonalDataFields($entity, $em) as $field) {
-            $fields[$field->getName()] = [
-                'field' => $field,
-                'value' => $field->getValue($entity),
-            ];
-        }
-
-        $this->postFlushDecryptQueue[$objId] = [
-            'entity' => $entity,
-            'fields' => $fields,
-        ];
-
-        $this->processFields($entity, $em, true, $isNewEntity);
-    }
-
-    /**
-     * After we have persisted the entities, we want to have the
-     * decrypted information available once more.
-     */
-    /**
      * After we have persisted the entities, we want to have the
      * decrypted information available once more.
      */
@@ -155,32 +112,227 @@ class GdprSubscriber implements EventSubscriber
     {
         $unitOfWork = $args->getEntityManager()->getUnitOfWork();
 
-        foreach ($this->postFlushDecryptQueue as $pair) {
-            $fieldPairs = $pair['fields'];
-            $entity = $pair['entity'];
-            $oid = spl_object_hash($entity);
+        // Step through the cache of entity classes that were encrypted during onFlush
+        foreach ($this->postFlushDecryptQueue as $class => $entities) {
+            // Step through each specific entity.
+            foreach ($entities as $entityId => $entity) {
+                // Step through the entity fields and get the unencrypted value.
+                foreach ($entity as $fieldName => $unencryptedValue) {
+                    // Strip procy
+                    // Get current entity representation from the UoW identify map.
+                    $entity = $unitOfWork->getIdentityMap()[$class][$entityId];
 
-            foreach ($fieldPairs as $fieldPair) {
-                /** @var \ReflectionProperty $field */
-                $field = $fieldPair['field'];
+                    // Create a reflection and get the personal data object.
+                    $reflection = new \ReflectionObject($entity);
+                    $personalDataObject = $reflection->getProperty($fieldName)->getValue($entity);
 
-                $field->setValue($entity, $fieldPair['value']);
+                    // Overwrite the encrypted value with the unencrypted value cached during onFlush.
+                    $personalDataObject->setData($unencryptedValue);
 
-                if ($fieldPair['value'] instanceof PersonalData) {
-                    $data = $fieldPair['value']->getData();
-                    if (null !== $data) {
-                        $data = $this->decryptValue($data);
-                    }
-                    $fieldPair['value']->setData($data);
+                    // Update the unit of work.
+                    $unitOfWork->setOriginalEntityProperty(spl_object_id($entity), $fieldName, $personalDataObject);
                 }
-
-                $unitOfWork->setOriginalEntityProperty($oid, $field->getName(), $fieldPair['value']);
             }
-
-            $this->addToDecodedRegistry($entity);
         }
 
+        // Clear the queue once all encrypted values are decrypted again.
         $this->postFlushDecryptQueue = [];
+    }
+
+    public function onFlush(OnFlushEventArgs $args)
+    {
+        $em = $args->getEntityManager();
+
+        $unitOfWork = $em->getUnitOfWork();
+
+        $this->postFlushDecryptQueue = [];
+
+        foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
+            // Note that the third parameter is set to true for new entity insertions.
+            $this->onInsert($entity, $em);
+        }
+
+        // The PersonalDataTransformer returns
+        foreach ($unitOfWork->getScheduledEntityUpdates() as $entity) {
+            $this->onUpdate($entity, $em);
+            $className = ClassUtils::getClass($entity);
+            $unitOfWork->recomputeSingleEntityChangeSet($em->getClassMetadata($className), $entity);
+        }
+    }
+
+    /**
+     * Newly inserted entities do not have PersonalData objects do not have fully populated fields.
+     *
+     * For new entities we need to encrypt values if required, and populate the PersonalData fields from the annotation
+     * reader.
+     *
+     * @return void
+     */
+    private function onInsert(object $entity, EntityManagerInterface $em)
+    {
+        // Get a reflection of the entity.
+        $entityReflection = new \ReflectionObject($entity);
+
+        // Get the PersonalData fields in the entity class.
+        $personalDataFields = $this->getPersonalDataFields($em, $entity);
+
+        foreach ($personalDataFields as $fieldName => $personalDataProperties) {
+            // Get the PersonalData object, or create one.
+            $personalDataObject = $this->getPersonalDataObject($entityReflection, $fieldName, $entity);
+
+            if ($personalDataObject instanceof PersonalData) {
+                // Encrypt the data for insertion.
+
+                $className = ClassUtils::getClass($entity);
+
+                $this->encryptData($className, spl_object_id($entity), $entity->getId(), $fieldName, $personalDataObject);
+            }
+
+            $entityReflection->getProperty($fieldName)->setValue($entity, $personalDataObject);
+        }
+    }
+
+    /**
+     * Updated entities which contain PersonalData objects have their fields populated and decrypted during the onLoad event.
+     *
+     * If an entity has been updated via a form and the PersonalDataType with PersonalDataTransformer, then the submitted PersonalData objects
+     * are clones of the onLoad objects, so are triggered for update with the unit of work.
+     *
+     * If an entity PersonalData field has had its data modified outside a PersonalDataType then we need to match
+     */
+    private function onUpdate(object $entity, EntityManagerInterface $em)
+    {
+        $unitOfWork = $em->getUnitOfWork();
+
+        // Get a reflection of the entity.
+        $entityReflection = new \ReflectionObject($entity);
+
+        // Get classname
+        $className = ClassUtils::getClass($entity);
+
+        // Get the PersonalData fields in the entity class.
+        $personalDataFields = $this->getPersonalDataFields($em, $entity);
+
+        if (empty($personalDataFields)) {
+            return;
+        }
+
+        // For each of the personal data fields in the flushed entity.
+        foreach ($personalDataFields as $fieldName => $personalDataProperties) {
+            // Get the value flushed.
+            $flushedValue = $entityReflection->getProperty($fieldName)->getValue($entity);
+
+            // Check if the flushed value is different from the onLoad event value.
+            $hasDataChanged = $this->hasDataChanged(spl_object_id($entity), $fieldName, $flushedValue);
+
+            $haveAnnotationsChanged = $this->haveAnnotationsChanged($className, $fieldName);
+
+            // If there is no change to the data or to the annotation options then remove the field from the changeset.
+            if (false === $hasDataChanged && false === $haveAnnotationsChanged) {
+                unset($unitOfWork->getEntityChangeSet($entity)[$fieldName]);
+                continue;
+            }
+
+            // Get the PersonalData object from cache, the entity, or create one.
+            $personalData = $this->getPersonalDataObject($entityReflection, $fieldName, $entity);
+
+            if ($personalData instanceof PersonalData) {
+                // Encrypt the data for insertion. If the object data hasn't changed between onLoad and onFlush then return false.
+                $this->encryptData($className, spl_object_id($entity), $entity->getId(), $fieldName, $personalData);
+            }
+
+            $entityReflection->getProperty($fieldName)->setValue($entity, $personalData);
+        }
+    }
+
+    private function hasDataChanged(string $oid, string $fieldName, $data)
+    {
+        if (!$data instanceof PersonalData) {
+            return true;
+        }
+
+        $data = $data->getData();
+
+        if(!array_key_exists($fieldName, $this->decodedValues[$oid])){
+            return true;
+        }
+
+        $onLoadValue = $this->decodedValues[$oid][$fieldName]['decrypted'];
+
+        // If the unencrypted data in the Object is the same as the original data at from onLoad then reset with the original encryption.
+        if ($data === $onLoadValue) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function haveAnnotationsChanged($entityClassName, $fieldName)
+    {
+        if (!isset($this->annotationsFieldChanged[$entityClassName])) {
+            return false;
+        }
+
+        if (!isset($this->annotationsFieldChanged[$entityClassName][$fieldName])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return bool|PersonalData return false if there is no change to the unencrypted data
+     */
+    private function encryptData(string $className, string $oid, string $entityId, string $fieldName, PersonalData $personalData): bool|PersonalData
+    {
+        $onFlushDataValue = $personalData->getData();
+
+        // If the unencrypted data in the Object is the same as the original data at from onLoad then reset with the original encryption.
+        if (isset($this->decodedValues[$oid][$fieldName])) {
+            // Get the onLoad unencrypted value.
+            $decryptedValue = $this->decodedValues[$oid][$fieldName]['decrypted'];
+
+            // If the onFlush value is the same as the onLoad decrypted value
+            if ($onFlushDataValue === $decryptedValue) {
+                // Set the original encryption to the PersonalData object.
+                $personalData->setData($this->decodedValues[$oid][$fieldName]['original']);
+
+                // Store the decrypted value for the post flush decryption.
+                $this->addToPostFlushDecryptQueue($className, $entityId, $fieldName, $decryptedValue);
+
+                return $personalData;
+            }
+        }
+
+        // If the data is not supposed to be encrypted then return the PersonalData object
+        if (false === $personalData->isEncrypted) {
+            return $personalData;
+        }
+
+        // Otherwise, encrypt the new data, and update the object
+        $encrypted = $this->encryptor->encrypt($onFlushDataValue);
+
+        $personalData
+            ->setData($encrypted)
+            ->setUpdatedOn(new \DateTime('now'))
+        ;
+
+        $this->addToPostFlushDecryptQueue($className, $entityId, $fieldName, $onFlushDataValue);
+
+        return $personalData;
+    }
+
+    private function addToPostFlushDecryptQueue(string $className, string $entityId, string $fieldName, $decryptedValue)
+    {
+        if (!array_key_exists($className, $this->postFlushDecryptQueue)) {
+            $this->postFlushDecryptQueue[$className] = [];
+        }
+
+        if (!array_key_exists($entityId, $this->postFlushDecryptQueue)) {
+            $this->postFlushDecryptQueue[$className][$entityId] = [];
+        }
+
+        $this->postFlushDecryptQueue[$className][$entityId][$fieldName] = $decryptedValue;
     }
 
     /**
@@ -191,128 +343,124 @@ class GdprSubscriber implements EventSubscriber
      */
     public function postLoad(LifecycleEventArgs $args)
     {
+        $this->loadEntity($args);
+    }
+
+    private function loadEntity(LifecycleEventArgs $args)
+    {
+        // Get the entity.
         $entity = $args->getEntity();
-        $em = $args->getEntityManager();
+        $unitOfWork = $args->getEntityManager()->getUnitOfWork();
 
-        if (!$this->hasInDecodedRegistry($entity)) {
-            if ($this->processFields($entity, $em, false)) {
-                $this->addToDecodedRegistry($entity);
-            }
+        // Get the entity reflection
+        $personalDataFields = $this->getPersonalDataFields($args->getEntityManager(), $entity);
+
+        // If there are no personal data reflection properties then do nothing.;
+        if (empty($personalDataFields)) {
+            return;
         }
-    }
 
-    /**
-     * Decrypt a value.
-     *
-     * If the value is an object, or if it does not contain the suffic <ENC> then return the value itself back.
-     * Otherwise, decrypt the value and return.
-     */
-    public function decryptValue(string $value): string
-    {
-        return $this->encryptor->decrypt($value);
-    }
+        // Get a reflection of the entity.
+        $entityReflection = new \ReflectionObject($entity);
 
-    /**
-     * Load or persist a PersonalData entity to a personal_data doctrine field.
-     *
-     * On Flush methods the process will encrypt the data if the field parameters are set isEncrypted= true.
-     *
-     * If the entity is newly created then set the createdOn date, and if updated then set the updatedON date.
-     *
-     * If loading the entity then the method will decrypt the data field.
-     */
-    protected function processFields(object $entity, EntityManagerInterface $em, ?bool $isFlush = true, ?bool $isNewEntity = true): bool
-    {
-        $properties = $this->getPersonalDataFields($entity, $em);
+        /*
+         * Step through each of the personal_data properties in the entity.
+         */
+        foreach ($personalDataFields as $entityField => $personalDataOptions) {
+            // We now have a PersonalData object.
+            $personalDataObject = $this->getPersonalDataObject($entityReflection, $entityField, $entity);
 
-        $unitOfWork = $em->getUnitOfWork();
-        $oid = spl_object_hash($entity);
-
-        foreach ($properties as $refProperty) {
-            $value = $refProperty->getValue($entity);
-
-            // Skip any empty values.
-            if (null === $value) {
+            if (null === $personalDataObject) {
                 continue;
             }
 
-            // If the value is not an instance of PersonalData then convert it to one.
-            if (!$value instanceof PersonalData) {
-                $originalData = $value;
-                $value = new PersonalData();
+            // Get the original data value as loaded from the manager.
+            $originalData = $personalDataObject->getData();
 
-                $value
-                    ->setData($originalData)
-                    ->setCreatedOn(new \DateTime('now'))
-                ;
+            // Decrypt that value.
+            $decryptedValue = $this->encryptor->decrypt($originalData);
+
+            // Cache the original and the decrypted values for later use.
+            $this->cacheDecodedValue(spl_object_id($entity), $entityField, $originalData, $decryptedValue);
+
+            // If the original and decrypted are different then set the decrypted value.
+            if ($originalData !== $decryptedValue) {
+                $personalDataObject->setData($decryptedValue);
             }
 
-            // If the operation is an insertion/update then update with latest annotations and encrypt if required.
-            // If the operation is a load then attempt to decrypt the data field.
-            if ($isFlush) {
-                // Update the PersonalData object with the current entity annotations.
-                $this->updateFromAnnotations(get_class($entity), $refProperty->getName(), $value);
+            // Store the original decoded PersonalData object to be used during onFlush event.
+            $this->decodedRegistry[spl_object_id($entity)][$entityField] = $personalDataObject;
 
-                // Set the updatedOn field
-                $now = new \DateTime('now');
-                $value->setUpdatedOn($now);
+            // Set this as the original entity property.
+            $unitOfWork->setOriginalEntityProperty(spl_object_id($entity), $entityField, $personalDataObject);
 
-                // If encrypt bundle is not disabled, and the annotation is supposed to encrypt
-                if (false === $this->isDisabled && true === $value->isEncrypted) {
-                    $encrypted = $this->encryptor->encrypt($value->getData());
-                    $value->setData($encrypted);
-                }
+            // Update the PersonalData object fields with the latest annotation personal_data options.
+            // We will compare the object during flush against the original.
+            $reflection = new \ReflectionObject($personalDataObject);
 
-                // Dispatch an event for the persisted value
-                $event = new AccessEvent($value);
-                $this->dispatcher->dispatch($event, AccessEvents::UPDATE);
-            } else {
-                $data = $value->getData();
-                if (null !== $data) {
-                    $data = $this->decryptValue($data);
-                }
-                $value->setData($data);
-
-                // Dispatch an event for the loaded value
-                $event = new AccessEvent($value);
-                $this->dispatcher->dispatch($event, AccessEvents::LOAD);
-            }
-
-            // Set the PersonalData object back to the entity.
-            $refProperty->setValue($entity, $value);
-
-            if (!$isFlush) {
-                // we don't want the object to be dirty immediately after reading
-                $unitOfWork->setOriginalEntityProperty($oid, $refProperty->getName(), $value);
+            foreach ($personalDataOptions as $annotationOption => $annotationValue) {
+                $reflection->getProperty($annotationOption)->setValue($personalDataObject, $annotationValue);
             }
         }
-
-        return !empty($properties);
     }
 
-    /**
-     * Check if we have entity in decoded registry.
-     *
-     * @param object $entity Some doctrine entity
-     */
-    protected function hasInDecodedRegistry(object $entity): bool
+    private function getPersonalDataObject(\ReflectionObject $reflectionObject, string $fieldName, object $entity): ?PersonalData
     {
-        return isset($this->decodedRegistry[spl_object_hash($entity)]);
+        $cachedDataObject = null;
+
+        // If the personal data object was already loaded and cached then get it.
+        if (isset($this->decodedRegistry[spl_object_id($entity)][$fieldName])) {
+            // Get the onLoad PersonalData object that was updated at onLoadEvent.
+            $cachedDataObject = $this->decodedRegistry[spl_object_id($entity)][$fieldName];
+        }
+
+        // If the property hasn't been initialised then ignore.
+        if (false === $reflectionObject->getProperty($fieldName)->isInitialized($entity)) {
+            return null;
+        }
+
+        // If an onLoad PersonalData object exists then get it.
+        $value = $reflectionObject->getProperty($fieldName)->getValue($entity);
+
+        if (null === $value) {
+            return null;
+        }
+
+        if ($cachedDataObject instanceof PersonalData) {
+            $cachedDataObject->setData($value);
+
+            return $cachedDataObject;
+        }
+
+        // If the property is not currently a PersonalData object, but should be, then create one using the value as data.
+        if ($value instanceof PersonalData) {
+            return $value;
+        }
+
+        // Otherwise return a new PersonalData Object.
+        return (new PersonalData())
+            ->setData($value)
+            ->setCreatedOn(new \DateTime('now'))
+        ;
     }
 
-    /**
-     * Adds entity to decoded registry.
-     *
-     * @param object $entity Some doctrine entity
-     */
-    protected function addToDecodedRegistry(object $entity): void
+    private function cacheDecodedValue(string $oid, string $fieldName, ?string $originalValue, ?string $decodedValue)
     {
-        $this->decodedRegistry[spl_object_hash($entity)] = true;
+        if (!array_key_exists($oid, $this->decodedValues)) {
+            $this->decodedValues[$oid] = [];
+        }
+
+        if (!array_key_exists($fieldName, $this->decodedValues[$oid])) {
+            $this->decodedValues[$oid][$fieldName] = [];
+        }
+
+        $this->decodedValues[$oid][$fieldName]['original'] = $originalValue;
+        $this->decodedValues[$oid][$fieldName]['decrypted'] = $decodedValue;
     }
 
-    protected function getPersonalDataFields(object $entity, EntityManagerInterface $em): array
+    private function getPersonalDataFields(EntityManagerInterface $em, object $entity): array
     {
-        $className = get_class($entity);
+        $className = ClassUtils::getClass($entity);
 
         if (isset($this->personalDataFieldCache[$className])) {
             return $this->personalDataFieldCache[$className];
@@ -322,16 +470,10 @@ class GdprSubscriber implements EventSubscriber
 
         $personalDataFields = [];
 
-        foreach ($meta->getReflectionProperties() as $refProperty) {
-            /** @var \ReflectionProperty $refProperty */
-            foreach ($this->annReader->getPropertyAnnotations($refProperty) as $key => $annotation) {
-                // GDPR Bundle, if the annotation is PersonalData then add
-                if ($annotation instanceof Column) {
-                    if (PersonalDataType::NAME === $annotation->type) {
-                        $refProperty->setAccessible(true);
-                        $personalDataFields[$refProperty->getName()] = $refProperty;
-                    }
-                }
+        // Step through each of the entity properties
+        foreach ($meta->fieldMappings as $fieldName => $fieldMapping) {
+            if (PersonalDataType::NAME === $fieldMapping['type']) {
+                $personalDataFields[$fieldName] = $fieldMapping['options'];
             }
         }
 
@@ -340,25 +482,59 @@ class GdprSubscriber implements EventSubscriber
         return $personalDataFields;
     }
 
-    public function updateFromAnnotations(string $entity, string $field, PersonalData $personalData): PersonalData
+    public function updateFromAnnotations(string $entityClassName, string $field, PersonalData $personalData): bool
     {
-        $refProperty = $this->personalDataFieldCache[$entity][$field];
+        $refProperty = $this->personalDataFieldCache[$entityClassName][$field];
+
+        // Get the latest set of annotations from the entity property.
         $annotation = $this->annReader->getPropertyAnnotation($refProperty, Column::class);
 
+        // Get the personal_data options from the annotation.
         $options = $annotation->options;
 
-        foreach ($options as $optionName => $value) {
-            // Get the setter for the PersonalData field.
-            $method_name = 'set'.ucfirst($optionName);
+        $hasAnnotationChange = false;
 
-            // Where the setter exists in the PersonalData class then update, else then throw an error.
-            if (method_exists($personalData, $method_name)) {
-                $personalData->$method_name($value);
-            } else {
-                throw new GdprException(sprintf('Definition of "personal_data" option %s does not have a matching setter %s in %s::%s', $optionName, $method_name, $entity, $field));
+        // Get a reflection of the PersonalData object entity.
+        $personalDataReflectionObject = new \ReflectionObject($personalData);
+
+        // For each option in the personal_data annotation, attempt to set the property in the PersonalData object.
+        foreach ($options as $optionName => $annotationValue) {
+            // If the annotation option doesn't exist in the personal data object properties then throw an error.
+            if (false === $personalDataReflectionObject->hasProperty($optionName)) {
+                throw new GdprException(sprintf('Definition of "personal_data" option %s does not have a matching property in %s', $optionName, $entityClassName));
+            }
+
+            // If the annotation option is the same as is already defined in the object properties then skip.
+            if ($annotationValue === $personalDataReflectionObject->getProperty($optionName)) {
+                continue;
+            }
+
+            // The "retainFor" value is a string in the annotations, but needs to be a \DateInterval in the object.
+            if ('retainFor' === $optionName) {
+                // Create a date interval based on the annotation P6Y for example.
+                $annotationRetainFor = (new \DateInterval($annotationValue));
+
+                // If the string is the same as the date interval
+                if (null !== $personalData->getRetainFor() && $personalData->getRetainFor() === $annotationRetainFor) {
+                    continue;
+                }
+
+                $annotationValue = $annotationRetainFor;
+            }
+
+            // Update the PersonalData object with the new annotation value.
+            $personalDataReflectionObject->getProperty($optionName)->setValue($personalData, $annotationValue);
+            $hasAnnotationChange = true;
+
+            if (!array_key_exists($entityClassName, $this->annotationsFieldChanged)) {
+                $this->annotationsFieldChanged[$entityClassName] = [];
+            }
+
+            if (!array_key_exists($optionName, $this->annotationsFieldChanged[$entityClassName])) {
+                $this->annotationsFieldChanged[$entityClassName][] = $optionName;
             }
         }
 
-        return $personalData;
+        return $hasAnnotationChange;
     }
 }
