@@ -221,7 +221,7 @@ class PersonalData
      *
      * @var DateInterval A DateInterval string such as P6Y
      */
-    public ?DateInterval $retainFor;
+    public null|string|DateInterval $retainFor;
 
     /**
      * Disposal method.
