@@ -9,9 +9,8 @@ use Doctrine\ORM\Mapping as ORM;
  * History.
  *
  * An entity to store the history of any changes/activity to PersonalData objects
- *
- * @ORM\Entity(repositoryClass="SpecShaper\GdprBundle\Repository\HistoryRepository")
  */
+#[ORM\Entity(repositoryClass: 'SpecShaper\GdprBundle\Repository\HistoryRepository')]
 class History
 {
     public const ACTION_CREATED = 'CREATED';
@@ -20,51 +19,37 @@ class History
     public const ACTION_DISPOSED = 'DISPOSED';
     public const ACTION_READ = 'READ';
     public const ACTION_EXPORTED = 'EXPORTED';
-
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     protected int $id;
-
     /**
      * The entity class name.
-     *
-     * @ORM\Column(type="string")
      */
+    #[ORM\Column(type: 'string')]
     protected string $entity;
-
     /**
      * The entity field name.
-     *
-     * @ORM\Column(type="string")
      */
+    #[ORM\Column(type: 'string')]
     protected string $field;
-
     /**
      * The action performed on the PersonalData object.
-     *
-     * @ORM\Column(type="string")
      */
+    #[ORM\Column(type: 'string')]
     protected string $action;
-
     /**
      * The date and time of the action.
-     *
-     * @ORM\Column(type="datetime")
      */
+    #[ORM\Column(type: 'datetime')]
     protected DateTimeInterface $actionDate;
-
     /**
      * The user that initiated the action.
      *
      * Null if the a system generated action.
-     *
-     * @ORM\Column(type="string", nullable=true)
      */
+    #[ORM\Column(type: 'string', nullable: true)]
     protected string $actionBy;
-
     /**
      * @return int
      */
@@ -72,7 +57,6 @@ class History
     {
         return $this->id;
     }
-
     /**
      * @param int $id
      * @return History
@@ -82,7 +66,6 @@ class History
         $this->id = $id;
         return $this;
     }
-
     /**
      * @return string
      */
@@ -90,7 +73,6 @@ class History
     {
         return $this->entity;
     }
-
     /**
      * @param string $entity
      * @return History
@@ -100,7 +82,6 @@ class History
         $this->entity = $entity;
         return $this;
     }
-
     /**
      * @return string
      */
@@ -108,7 +89,6 @@ class History
     {
         return $this->field;
     }
-
     /**
      * @param string $field
      * @return History
@@ -118,7 +98,6 @@ class History
         $this->field = $field;
         return $this;
     }
-
     /**
      * @return string
      */
@@ -126,7 +105,6 @@ class History
     {
         return $this->action;
     }
-
     /**
      * @param string $action
      * @return History
@@ -136,7 +114,6 @@ class History
         $this->action = $action;
         return $this;
     }
-
     /**
      * @return DateTimeInterface
      */
@@ -144,7 +121,6 @@ class History
     {
         return $this->actionDate;
     }
-
     /**
      * @param DateTimeInterface $actionDate
      * @return History
@@ -154,7 +130,6 @@ class History
         $this->actionDate = $actionDate;
         return $this;
     }
-
     /**
      * @return string
      */
@@ -162,7 +137,6 @@ class History
     {
         return $this->actionBy;
     }
-
     /**
      * @param string $actionBy
      * @return History
@@ -172,5 +146,4 @@ class History
         $this->actionBy = $actionBy;
         return $this;
     }
-
 }
