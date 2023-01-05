@@ -23,7 +23,8 @@ class DisposeEvent extends Event
     public function __construct(
         protected string $parameter,
         protected ?string $method = PersonalData::DISPOSE_BY_SET_NULL,
-        protected ?array $args = [])
+        protected ?array $args = []
+    )
     {}
 
     public function getParameter(): string

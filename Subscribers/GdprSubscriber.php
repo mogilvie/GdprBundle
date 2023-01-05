@@ -6,11 +6,11 @@ use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\Common\Util\ClassUtils;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Column;
+use Doctrine\Persistence\Event\LifecycleEventArgs;
 use SpecShaper\EncryptBundle\Encryptors\EncryptorInterface;
 use SpecShaper\GdprBundle\Exception\GdprException;
 use SpecShaper\GdprBundle\Model\PersonalData;
@@ -110,7 +110,7 @@ class GdprSubscriber implements EventSubscriber
      */
     public function postFlush(PostFlushEventArgs $args)
     {
-        $unitOfWork = $args->getEntityManager()->getUnitOfWork();
+        $unitOfWork = $args->getObjectManager()->getUnitOfWork();
 
         // Step through the cache of entity classes that were encrypted during onFlush
         foreach ($this->postFlushDecryptQueue as $class => $entities) {
@@ -141,7 +141,7 @@ class GdprSubscriber implements EventSubscriber
 
     public function onFlush(OnFlushEventArgs $args)
     {
-        $em = $args->getEntityManager();
+        $em = $args->getObjectManager();
 
         $unitOfWork = $em->getUnitOfWork();
 
@@ -253,7 +253,7 @@ class GdprSubscriber implements EventSubscriber
 
         $data = $data->getData();
 
-        if(!array_key_exists($fieldName, $this->decodedValues[$oid])){
+        if (!array_key_exists($fieldName, $this->decodedValues[$oid])) {
             return true;
         }
 
@@ -349,11 +349,12 @@ class GdprSubscriber implements EventSubscriber
     private function loadEntity(LifecycleEventArgs $args)
     {
         // Get the entity.
-        $entity = $args->getEntity();
-        $unitOfWork = $args->getEntityManager()->getUnitOfWork();
+        $entity = $args->getObject();
+        $om = $args->getObjectManager();
+        $unitOfWork = $om->getUnitOfWork();
 
         // Get the entity reflection
-        $personalDataFields = $this->getPersonalDataFields($args->getEntityManager(), $entity);
+        $personalDataFields = $this->getPersonalDataFields($om, $entity);
 
         // If there are no personal data reflection properties then do nothing.;
         if (empty($personalDataFields)) {
@@ -441,7 +442,7 @@ class GdprSubscriber implements EventSubscriber
         return (new PersonalData())
             ->setData($value)
             ->setCreatedOn(new \DateTime('now'))
-        ;
+            ;
     }
 
     private function cacheDecodedValue(string $oid, string $fieldName, ?string $originalValue, ?string $decodedValue)
