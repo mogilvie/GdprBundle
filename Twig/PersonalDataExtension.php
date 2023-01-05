@@ -46,7 +46,7 @@ class PersonalDataExtension extends AbstractExtension
             return null;
         }
 
-//        // If value is not a personal data object then return it.
+        // If value is not a personal data object then return it.
         if (!$personalData instanceof PersonalData) {
             return $personalData;
         }
