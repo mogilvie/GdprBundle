@@ -10,6 +10,7 @@ use Symfony\Component\Validator\Constraints\Composite;
  *
  * @author Mark Ogilvie <mark.ogilvie@ogilvieconsulting.net>
  */
+#[\Attribute(\Attribute::TARGET_PROPERTY)]
 class PersonalData extends Composite
 {
     public array $constraints = [];
