@@ -253,7 +253,7 @@ class GdprSubscriber implements EventSubscriber
 
         $data = $data->getData();
 
-        if (!array_key_exists($fieldName, $this->decodedValues[$oid])) {
+        if (!array_key_exists($oid, $this->decodedValues) || !array_key_exists($fieldName, $this->decodedValues[$oid])) {
             return true;
         }
 
