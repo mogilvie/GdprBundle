@@ -1,12 +1,12 @@
 {
     "name": "specshaper/gdpr-bundle",
     "type": "symfony-bundle",
-    "description": "A Symfony 5|6 bundle for classifying entity parameters according to GDPR requirements and encrypting data",
+    "description": "A Symfony 5|6|7 bundle for classifying entity parameters according to GDPR requirements and encrypting data",
     "homepage": "https://github.com/mogilvie/GdprBundle",
     "authors": [
         {
             "name": "Mark Ogilvie",
-            "email": "mark.ogilvie@ogilvieconsulting.net"
+            "email": "m.ogilvie@parolla.ie"
         }
     ],
     "keywords": [
@@ -17,12 +17,13 @@
     ],
     "require": {
         "php": ">=8.0",
-        "symfony/console": "^5.4|^6.0",
-        "symfony/form": "^5.4|^6.0",
-        "symfony/framework-bundle": "^5.4|^6.0",
-        "symfony/validator": "^5.4|^6.0",
-        "symfony/twig-bundle": "^5.4|^6.0",
-        "symfony/security-bundle": "^5.4|^6.0",
+        "symfony/console": "^5.4|^6.0|^7.0",
+        "symfony/form": "^5.4|^6.0|^7.0",
+        "symfony/framework-bundle": "^5.4|^6.0|^7.0",
+        "symfony/validator": "^5.4|^6.0|^7.0",
+        "symfony/twig-bundle": "^5.4|^6.0|^7.0",
+        "symfony/security-bundle": "^5.4|^6.0|^7.0",
+        "symfony/property-access": "^5.4|^6.0|^7.0",
         "twig/twig": "^3.0",
         "symfony/orm-pack": "*",
         "specshaper/encrypt-bundle": "dev-master",
