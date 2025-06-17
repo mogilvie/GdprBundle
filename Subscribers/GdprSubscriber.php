@@ -16,6 +16,7 @@ use SpecShaper\GdprBundle\Exception\GdprException;
 use SpecShaper\GdprBundle\Model\PersonalData;
 use SpecShaper\GdprBundle\Types\PersonalDataType;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use SpecShaper\GdprBundle\Utils\ValueExtractor;
 
 /**
  * Doctrine event subscriber which encrypt/decrypt entities.
@@ -58,6 +59,8 @@ class GdprSubscriber implements EventSubscriber
      */
     private array $postFlushDecryptQueue = [];
 
+    private ValueExtractor $valueExtractor;
+
     /**
      * If encryption is disabled in the app parameters.
      */
@@ -70,6 +73,7 @@ class GdprSubscriber implements EventSubscriber
         bool $isDisabled)
     {
         $this->isDisabled = $isDisabled;
+        $this->valueExtractor = new ValueExtractor();
     }
 
     public function getEncryptor(): EncryptorInterface
@@ -122,12 +126,16 @@ class GdprSubscriber implements EventSubscriber
                     // Get current entity representation from the UoW identify map.
                     $entity = $unitOfWork->getIdentityMap()[$class][$entityId];
 
-                    // Create a reflection and get the personal data object.
-                    $reflection = new \ReflectionObject($entity);
-                    $personalDataObject = $reflection->getProperty($fieldName)->getValue($entity);
+//                    // Create a reflection and get the personal data object.
+//                    $reflection = new \ReflectionObject($entity);
+
+                    $personalDataObject = $this->valueExtractor->extractValue($entity, $fieldName);
+//                    $personalDataObject = $reflection->getProperty($fieldName)->getValue($entity);
 
                     // Overwrite the encrypted value with the unencrypted value cached during onFlush.
-                    $personalDataObject->setData($unencryptedValue);
+                    if($personalDataObject instanceof PersonalData){
+                        $personalDataObject->setData($unencryptedValue);
+                    }
 
                     // Update the unit of work.
                     $unitOfWork->setOriginalEntityProperty(spl_object_id($entity), $fieldName, $personalDataObject);
@@ -171,24 +179,23 @@ class GdprSubscriber implements EventSubscriber
     private function onInsert(object $entity, EntityManagerInterface $em)
     {
         // Get a reflection of the entity.
-        $entityReflection = new \ReflectionObject($entity);
+//        $entityReflection = new \ReflectionObject($entity);
 
         // Get the PersonalData fields in the entity class.
         $personalDataFields = $this->getPersonalDataFields($em, $entity);
 
         foreach ($personalDataFields as $fieldName => $personalDataProperties) {
             // Get the PersonalData object, or create one.
-            $personalDataObject = $this->getPersonalDataObject($entityReflection, $fieldName, $entity);
+            $value = $this->valueExtractor->extractValue($entity, $fieldName);
 
-            if ($personalDataObject instanceof PersonalData) {
+            if ($value instanceof PersonalData) {
                 // Encrypt the data for insertion.
-
                 $className = ClassUtils::getClass($entity);
 
-                $this->encryptData($className, spl_object_id($entity), $entity->getId(), $fieldName, $personalDataObject);
+                $this->encryptData($className, spl_object_id($entity), $entity->getId(), $fieldName, $value);
             }
 
-            $entityReflection->getProperty($fieldName)->setValue($entity, $personalDataObject);
+            $this->valueExtractor->setValue($entity, $fieldName, $value);
         }
     }
 
@@ -204,9 +211,6 @@ class GdprSubscriber implements EventSubscriber
     {
         $unitOfWork = $em->getUnitOfWork();
 
-        // Get a reflection of the entity.
-        $entityReflection = new \ReflectionObject($entity);
-
         // Get classname
         $className = ClassUtils::getClass($entity);
 
@@ -220,7 +224,7 @@ class GdprSubscriber implements EventSubscriber
         // For each of the personal data fields in the flushed entity.
         foreach ($personalDataFields as $fieldName => $personalDataProperties) {
             // Get the value flushed.
-            $flushedValue = $entityReflection->getProperty($fieldName)->getValue($entity);
+            $flushedValue = $this->valueExtractor->extractValue($entity, $fieldName);
 
             // Check if the flushed value is different from the onLoad event value.
             $hasDataChanged = $this->hasDataChanged(spl_object_id($entity), $fieldName, $flushedValue);
@@ -234,14 +238,14 @@ class GdprSubscriber implements EventSubscriber
             }
 
             // Get the PersonalData object from cache, the entity, or create one.
-            $personalData = $this->getPersonalDataObject($entityReflection, $fieldName, $entity);
+            $personalData = $this->getPersonalDataObject($fieldName, $entity);
 
             if ($personalData instanceof PersonalData) {
                 // Encrypt the data for insertion. If the object data hasn't changed between onLoad and onFlush then return false.
                 $this->encryptData($className, spl_object_id($entity), $entity->getId(), $fieldName, $personalData);
             }
 
-            $entityReflection->getProperty($fieldName)->setValue($entity, $personalData);
+            $this->valueExtractor->setValue($entity, $fieldName, $personalData);
         }
     }
 
@@ -253,7 +257,7 @@ class GdprSubscriber implements EventSubscriber
 
         $data = $data->getData();
 
-        if (!array_key_exists($fieldName, $this->decodedValues[$oid])) {
+        if (!array_key_exists($oid, $this->decodedValues) || !array_key_exists($fieldName, $this->decodedValues[$oid])) {
             return true;
         }
 
@@ -361,15 +365,12 @@ class GdprSubscriber implements EventSubscriber
             return;
         }
 
-        // Get a reflection of the entity.
-        $entityReflection = new \ReflectionObject($entity);
-
         /*
          * Step through each of the personal_data properties in the entity.
          */
         foreach ($personalDataFields as $entityField => $personalDataOptions) {
             // We now have a PersonalData object.
-            $personalDataObject = $this->getPersonalDataObject($entityReflection, $entityField, $entity);
+            $personalDataObject = $this->getPersonalDataObject($entityField, $entity);
 
             if (null === $personalDataObject) {
                 continue;
@@ -397,15 +398,14 @@ class GdprSubscriber implements EventSubscriber
 
             // Update the PersonalData object fields with the latest annotation personal_data options.
             // We will compare the object during flush against the original.
-            $reflection = new \ReflectionObject($personalDataObject);
 
             foreach ($personalDataOptions as $annotationOption => $annotationValue) {
-                $reflection->getProperty($annotationOption)->setValue($personalDataObject, $annotationValue);
+                $this->valueExtractor->setValue($personalDataObject, $annotationOption, $annotationValue);
             }
         }
     }
 
-    private function getPersonalDataObject(\ReflectionObject $reflectionObject, string $fieldName, object $entity): ?PersonalData
+    private function getPersonalDataObject(string $fieldName, object $entity): ?PersonalData
     {
         $cachedDataObject = null;
 
@@ -415,13 +415,7 @@ class GdprSubscriber implements EventSubscriber
             $cachedDataObject = $this->decodedRegistry[spl_object_id($entity)][$fieldName];
         }
 
-        // If the property hasn't been initialised then ignore.
-        if (false === $reflectionObject->getProperty($fieldName)->isInitialized($entity)) {
-            return null;
-        }
-
-        // If an onLoad PersonalData object exists then get it.
-        $value = $reflectionObject->getProperty($fieldName)->getValue($entity);
+        $value =  $this->valueExtractor->extractValue($entity, $fieldName);
 
         if (null === $value) {
             return null;
@@ -442,7 +436,7 @@ class GdprSubscriber implements EventSubscriber
         return (new PersonalData())
             ->setData($value)
             ->setCreatedOn(new \DateTime('now'))
-            ;
+        ;
     }
 
     private function cacheDecodedValue(string $oid, string $fieldName, ?string $originalValue, ?string $decodedValue)
