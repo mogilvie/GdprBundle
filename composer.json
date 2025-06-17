@@ -26,7 +26,7 @@
         "symfony/property-access": "^5.4|^6.0|^7.0",
         "twig/twig": "^3.0",
         "symfony/orm-pack": "*",
-        "specshaper/encrypt-bundle": "dev-master",
+        "specshaper/encrypt-bundle": "^3.0",
         "roromix/spreadsheetbundle": "^1.0"
     },
     "autoload": {

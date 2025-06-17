@@ -185,6 +185,8 @@ Add the personal_data doctrine type to doctrine
 ## Step 3: Create the entities if using the new personal_data type.
 User the personal_data column type, and pass the options.
 
+Using Attributes and to be deprecated:
+
 ```php
 <?php
     // ...
@@ -220,6 +222,38 @@ User the personal_data column type, and pass the options.
      */
     protected PersonalData $iban;
    
+```
+
+Using Annotations going forward under Php 8
+
+```php
+
+    #[GdprAssert\PersonalData(new IreAssert\ValidPPS(groups: ['revenue'])]
+    #[ORM\Column(type: 'personal_data', nullable: true, options: [
+        'format' => 'STRING',
+        'isSensitive' => false,
+        'isEncrypted' => true,
+        'basisOfCollection' => 'LEGITIMATE_INTEREST',
+        'identifiableBy' => 'Can be used to identify an individual with tax records',
+        'providedBy' => 'The employee, revenue, the employer',
+        'purposeFor' => 'Used to submit tax returns to revenue and to employee',
+        'retainFor' => 'P6Y',
+        'disposeBy' => 'SET_NULL',
+        'methodOfReceipt' => ['HTTPS'],
+        'receiptProtection' => ['TSS'],
+        'methodOfReturn' => ['HTTPS', 'PDF'],
+        'returnProtection' => ['TSS', 'ENCRYPTED_PDF'],
+    ])]
+    protected ?PersonalData $taxNumber;
+```
+
+Or with multiple Assertions use nested attributes
+```php
+    #[GdprAssert\PersonalData([
+        new Assert\Iban(groups: ['bank_account']),
+        new Assert\NotBlank(groups: ['bank_account']),
+    ])]
+
 ```
 Look at the [PersonalData](./Model/PersonalData.php) object constants for the full range of options available.
 
