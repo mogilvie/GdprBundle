@@ -226,6 +226,12 @@ class GdprSubscriber implements EventSubscriber
             // Get the value flushed.
             $flushedValue = $this->valueExtractor->extractValue($entity, $fieldName);
 
+            // If the original data was never encrypted, but it now needs to be by the PersonalData attribute isEncrypted = true,
+            // Then trigger an the hasDataChanged check.
+            if(!str_ends_with($flushedValue, "=<ENC>") && $personalDataProperties['isEncrypted'] === true){
+                unset($this->decodedValues[spl_object_id($entity)][$fieldName]);
+            }
+            
             // Check if the flushed value is different from the onLoad event value.
             $hasDataChanged = $this->hasDataChanged(spl_object_id($entity), $fieldName, $flushedValue);
 
