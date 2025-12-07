@@ -114,38 +114,38 @@ class GdprSubscriber implements EventSubscriber
      */
     public function postFlush(PostFlushEventArgs $args)
     {
-        $unitOfWork = $args->getObjectManager()->getUnitOfWork();
-
-        // Step through the cache of entity classes that were encrypted during onFlush
+        // No need for identity map lookups; we kept the object reference
         foreach ($this->postFlushDecryptQueue as $class => $entities) {
-            // Step through each specific entity.
-            foreach ($entities as $entityId => $entity) {
-                // Step through the entity fields and get the unencrypted value.
-                foreach ($entity as $fieldName => $unencryptedValue) {
-                    // Strip procy
-                    // Get current entity representation from the UoW identify map.
-                    $entity = $unitOfWork->getIdentityMap()[$class][$entityId];
+            foreach ($entities as $entityKey => $payload) {
+                $entity  = $payload['entity'];
+                $fields  = $payload['fields'] ?? [];
 
-//                    // Create a reflection and get the personal data object.
-//                    $reflection = new \ReflectionObject($entity);
-
-                    $personalDataObject = $this->valueExtractor->extractValue($entity, $fieldName);
-//                    $personalDataObject = $reflection->getProperty($fieldName)->getValue($entity);
-
-                    // Overwrite the encrypted value with the unencrypted value cached during onFlush.
-                    if($personalDataObject instanceof PersonalData){
-                        $personalDataObject->setData($unencryptedValue);
+                if (!$entity) {
+                    // Fallback for legacy entries: try identity map with entityKey
+                    $uow = $args->getObjectManager()->getUnitOfWork();
+                    if (isset($uow->getIdentityMap()[$class][$entityKey])) {
+                        $entity = $uow->getIdentityMap()[$class][$entityKey];
+                    } else {
+                        continue; // nothing we can do
                     }
+                }
 
-                    // Update the unit of work.
-                    $unitOfWork->setOriginalEntityProperty(spl_object_id($entity), $fieldName, $personalDataObject);
+                $reflection = new \ReflectionObject($entity);
+
+                foreach ($fields as $fieldName => $unencryptedValue) {
+                    $personalDataObject = $reflection->getProperty($fieldName)->getValue($entity);
+                    $personalDataObject->setData($unencryptedValue);
+
+                    // Keep UoW originals in sync
+                    $args->getObjectManager()->getUnitOfWork()
+                        ->setOriginalEntityProperty(spl_object_id($entity), $fieldName, $personalDataObject);
                 }
             }
         }
 
-        // Clear the queue once all encrypted values are decrypted again.
         $this->postFlushDecryptQueue = [];
     }
+
 
     public function onFlush(OnFlushEventArgs $args)
     {
@@ -178,24 +178,27 @@ class GdprSubscriber implements EventSubscriber
      */
     private function onInsert(object $entity, EntityManagerInterface $em)
     {
-        // Get a reflection of the entity.
-//        $entityReflection = new \ReflectionObject($entity);
-
         // Get the PersonalData fields in the entity class.
         $personalDataFields = $this->getPersonalDataFields($em, $entity);
 
         foreach ($personalDataFields as $fieldName => $personalDataProperties) {
             // Get the PersonalData object, or create one.
-            $value = $this->valueExtractor->extractValue($entity, $fieldName);
+            $personalDataObject = $this->valueExtractor->extractValue($entity, $fieldName);
 
-            if ($value instanceof PersonalData) {
+            if ($personalDataObject instanceof PersonalData) {
                 // Encrypt the data for insertion.
                 $className = ClassUtils::getClass($entity);
 
-                $this->encryptData($className, spl_object_id($entity), $entity->getId(), $fieldName, $value);
+                $this->encryptData(
+                    $className,
+                    spl_object_id($entity),
+                    $this->resolveEntityKey($entity, $em),
+                    $fieldName,
+                    $personalDataObject
+                );
             }
 
-            $this->valueExtractor->setValue($entity, $fieldName, $value);
+            $this->valueExtractor->setValue($entity, $fieldName, $personalDataObject);
         }
     }
 
@@ -231,7 +234,7 @@ class GdprSubscriber implements EventSubscriber
             if(!str_ends_with($flushedValue, "=<ENC>") && $personalDataProperties['isEncrypted'] === true){
                 unset($this->decodedValues[spl_object_id($entity)][$fieldName]);
             }
-            
+
             // Check if the flushed value is different from the onLoad event value.
             $hasDataChanged = $this->hasDataChanged(spl_object_id($entity), $fieldName, $flushedValue);
 
@@ -248,7 +251,13 @@ class GdprSubscriber implements EventSubscriber
 
             if ($personalData instanceof PersonalData) {
                 // Encrypt the data for insertion. If the object data hasn't changed between onLoad and onFlush then return false.
-                $this->encryptData($className, spl_object_id($entity), $entity->getId(), $fieldName, $personalData);
+                $this->encryptData(
+                    $className,
+                    spl_object_id($entity),
+                    $this->resolveEntityKey($entity, $em),
+                    $fieldName,
+                    $personalData
+                );
             }
 
             $this->valueExtractor->setValue($entity, $fieldName, $personalData);
@@ -293,7 +302,14 @@ class GdprSubscriber implements EventSubscriber
     /**
      * @return bool|PersonalData return false if there is no change to the unencrypted data
      */
-    private function encryptData(string $className, string $oid, string $entityId, string $fieldName, PersonalData $personalData): bool|PersonalData
+    private function encryptData(
+        string $className,
+        string $oid,
+        string $entityId,
+        string $fieldName,
+        PersonalData $personalData,
+        ?object $entity = null
+    ): bool|PersonalData
     {
         $onFlushDataValue = $personalData->getData();
 
@@ -304,11 +320,12 @@ class GdprSubscriber implements EventSubscriber
 
             // If the onFlush value is the same as the onLoad decrypted value
             if ($onFlushDataValue === $decryptedValue) {
+
                 // Set the original encryption to the PersonalData object.
                 $personalData->setData($this->decodedValues[$oid][$fieldName]['original']);
 
                 // Store the decrypted value for the post flush decryption.
-                $this->addToPostFlushDecryptQueue($className, $entityId, $fieldName, $decryptedValue);
+                $this->addToPostFlushDecryptQueue($className, $entityId, $fieldName, $decryptedValue, $entity);
 
                 return $personalData;
             }
@@ -327,22 +344,23 @@ class GdprSubscriber implements EventSubscriber
             ->setUpdatedOn(new \DateTime('now'))
         ;
 
-        $this->addToPostFlushDecryptQueue($className, $entityId, $fieldName, $onFlushDataValue);
+        $this->addToPostFlushDecryptQueue($className, $entityId, $fieldName, $onFlushDataValue, $entity);
 
         return $personalData;
     }
 
-    private function addToPostFlushDecryptQueue(string $className, string $entityId, string $fieldName, $decryptedValue)
+    private function addToPostFlushDecryptQueue(string $className, string $entityKey, string $fieldName, $decryptedValue, ?object $entity = null): void
     {
-        if (!array_key_exists($className, $this->postFlushDecryptQueue)) {
+        if (!isset($this->postFlushDecryptQueue[$className])) {
             $this->postFlushDecryptQueue[$className] = [];
         }
-
-        if (!array_key_exists($entityId, $this->postFlushDecryptQueue)) {
-            $this->postFlushDecryptQueue[$className][$entityId] = [];
+        if (!isset($this->postFlushDecryptQueue[$className][$entityKey])) {
+            $this->postFlushDecryptQueue[$className][$entityKey] = [
+                'entity' => $entity,   // keep a direct reference
+                'fields' => [],
+            ];
         }
-
-        $this->postFlushDecryptQueue[$className][$entityId][$fieldName] = $decryptedValue;
+        $this->postFlushDecryptQueue[$className][$entityKey]['fields'][$fieldName] = $decryptedValue;
     }
 
     /**
@@ -537,5 +555,25 @@ class GdprSubscriber implements EventSubscriber
         }
 
         return $hasAnnotationChange;
+    }
+
+    private function resolveEntityKey(object $entity, EntityManagerInterface $em): string
+    {
+        // Try the real PK first
+        $id = $em->getUnitOfWork()->getSingleIdentifierValue($entity);
+        if ($id !== null && $id !== '') {
+            return (string)$id;
+        }
+
+        // Optional: if you add a UUID/publicId later
+        if (method_exists($entity, 'getUuid') && $entity->getUuid()) {
+            return (string)$entity->getUuid(); // RFC4122 string OK
+        }
+        if (method_exists($entity, 'getGdprRowKey') && $entity->getGdprRowKey()) {
+            return (string)$entity->getGdprRowKey();
+        }
+
+        // Fallback: always non-null and stable during the flush
+        return (string) spl_object_id($entity);
     }
 }
